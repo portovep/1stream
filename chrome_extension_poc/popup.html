@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      button {
+        height: 30px;
+        width: 30px;
+        outline: none;
+      }
+    </style>
+  </head>
+  <body>
+    <button id="changeColor"></button>
+    <div id="buttons">
+        <button id="startButton">Start</button>
+        <button id="sendButton" disabled>Send</button>
+        <button id="closeButton" disabled>Stop</button>
+    </div>
+
+    <div id="sendReceive">
+        <div id="send">
+            <h2>Send</h2>
+            <textarea id="dataChannelSend" disabled
+                      placeholder="Press Start, enter some text, then press Send."></textarea>
+        </div>
+        <div id="receive">
+            <h2>Receive</h2>
+            <textarea id="dataChannelReceive" disabled></textarea>
+        </div>
+    </div>
+    <script src="popup.js"></script>
+  </body>
+</html>
