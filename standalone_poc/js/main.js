@@ -69,12 +69,13 @@
       rightVideo.currentTime = command.currentTime;
       rightVideo.play();
       console.log("Playing right video at: " + command.currentTime);
+      logMediaCommandInUI(command)
     } else if (command.type == "PAUSE") {
       rightVideo.pause();
-      rightVideo.currentTime = command.currentTime;
+      //rightVideo.currentTime = command.currentTime;
       console.log("Pausing right video at: " + command.currentTime);
+      logMediaCommandInUI(command)
     } else if (command.type == "TEXT") {
-      console.log("Pausing right video at: " + command.currentTime);
       logMessageInUI(command.message);
     }
   }
@@ -202,7 +203,7 @@
 
   function createPeerConnection() {
     try {
-      pc = new RTCPeerConnection(null);
+      pc = new RTCPeerConnection(servers);
       pc.onicecandidate = handleIceCandidate;
 
       if (isInitiator) {
