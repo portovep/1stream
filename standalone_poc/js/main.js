@@ -1,5 +1,5 @@
 (function() {
-  // Define "global" variables
+  //// BINDINGS AND VIDEO SYNC ////
 
   var connectButton = null;
   var disconnectButton = null;
@@ -10,17 +10,9 @@
   var leftVideo = null;
   var rightVideo = null;
 
-  var localConnection = null; // RTCPeerConnection for our "local" connection
-  var remoteConnection = null; // RTCPeerConnection for the "remote"
-
-  var sendChannel = null; // RTCDataChannel for the local (sender)
-  var receiveChannel = null; // RTCDataChannel for the remote (receiver)
-
-  // Functions
-
-  // Set things up, connect event listeners, etc.
-
   function startup() {
+    console.log("Page done loading, starting app");
+
     connectButton = document.getElementById("connectButton");
     leftVideo = document.getElementById("leftVideo");
     rightVideo = document.getElementById("rightVideo");
@@ -30,9 +22,8 @@
     receiveBox = document.getElementById("receivebox");
 
     // Set event listeners for user interface widgets
-
     connectButton.addEventListener("click", connectPeers, false);
-    disconnectButton.addEventListener("click", disconnectPeers, false);
+    disconnectButton.addEventListener("click", hangup, false);
     sendButton.addEventListener("click", sendMessage, false);
 
     leftVideo.addEventListener("play", (event) => {
@@ -57,148 +48,22 @@
       );
     });
 
-    // leftVideo.ontimeupdate = (event) => {
-    //   console.log("The currentTime attribute has been updated. Again.");
+    // rightVideo.ontimeupdate = (event) => {
+    //   console.log(
+    //     "Right video: The currentTime attribute has been updated. Again."
+    //   );
     //   console.log(event);
     // };
+
+    rightVideo.addEventListener("pause", (e) => {
+      console.log("right video has been paused");
+      console.log("right video current time" + rightVideo.currentTime);
+    });
   }
 
-  // Connect the two peers. Normally you look for and connect to a remote
-  // machine here, but we're just connecting two local objects, so we can
-  // bypass that step.
-
-  function connectPeers() {
-    // Create the local connection and its event listeners
-
-    localConnection = new RTCPeerConnection();
-
-    // Create the data channel and establish its event listeners
-    sendChannel = localConnection.createDataChannel("sendChannel");
-    sendChannel.onopen = handleSendChannelStatusChange;
-    sendChannel.onclose = handleSendChannelStatusChange;
-
-    // Create the remote connection and its event listeners
-
-    remoteConnection = new RTCPeerConnection();
-    remoteConnection.ondatachannel = receiveChannelCallback;
-
-    // Set up the ICE candidates for the two peers
-
-    localConnection.onicecandidate = (e) =>
-      !e.candidate ||
-      remoteConnection
-        .addIceCandidate(e.candidate)
-        .catch(handleAddCandidateError);
-
-    remoteConnection.onicecandidate = (e) =>
-      !e.candidate ||
-      localConnection
-        .addIceCandidate(e.candidate)
-        .catch(handleAddCandidateError);
-
-    // Now create an offer to connect; this starts the process
-
-    localConnection
-      .createOffer()
-      .then((offer) => localConnection.setLocalDescription(offer))
-      .then(() =>
-        remoteConnection.setRemoteDescription(localConnection.localDescription)
-      )
-      .then(() => remoteConnection.createAnswer())
-      .then((answer) => remoteConnection.setLocalDescription(answer))
-      .then(() =>
-        localConnection.setRemoteDescription(remoteConnection.localDescription)
-      )
-      .catch(handleCreateDescriptionError);
-  }
-
-  // Handle errors attempting to create a description;
-  // this can happen both when creating an offer and when
-  // creating an answer. In this simple example, we handle
-  // both the same way.
-
-  function handleCreateDescriptionError(error) {
-    console.log("Unable to create an offer: " + error.toString());
-  }
-
-  // Handle successful addition of the ICE candidate
-  // on the "local" end of the connection.
-
-  function handleLocalAddCandidateSuccess() {
-    connectButton.disabled = true;
-  }
-
-  // Handle successful addition of the ICE candidate
-  // on the "remote" end of the connection.
-
-  function handleRemoteAddCandidateSuccess() {
-    disconnectButton.disabled = false;
-  }
-
-  // Handle an error that occurs during addition of ICE candidate.
-
-  function handleAddCandidateError() {
-    console.log("Oh noes! addICECandidate failed!");
-  }
-
-  // Handles clicks on the "Send" button by transmitting
-  // a message to the remote peer.
-
-  function sendMessage() {
-    var message = messageInputBox.value;
-    sendChannel.send(message);
-
-    // Clear the input box and re-focus it, so that we're
-    // ready for the next message.
-
-    messageInputBox.value = "";
-    messageInputBox.focus();
-  }
-
-  // Handle status changes on the local end of the data
-  // channel; this is the end doing the sending of data
-  // in this example.
-
-  function handleSendChannelStatusChange(event) {
-    if (sendChannel) {
-      var state = sendChannel.readyState;
-
-      if (state === "open") {
-        messageInputBox.disabled = false;
-        messageInputBox.focus();
-        sendButton.disabled = false;
-        disconnectButton.disabled = false;
-        connectButton.disabled = true;
-      } else {
-        messageInputBox.disabled = true;
-        sendButton.disabled = true;
-        connectButton.disabled = false;
-        disconnectButton.disabled = true;
-      }
-    }
-  }
-
-  // Called when the connection opens and the data
-  // channel is ready to be connected to the remote.
-
-  function receiveChannelCallback(event) {
-    receiveChannel = event.channel;
-    receiveChannel.onmessage = handleReceiveMessage;
-    receiveChannel.onopen = handleReceiveChannelStatusChange;
-    receiveChannel.onclose = handleReceiveChannelStatusChange;
-  }
-
-  // Handle onmessage events for the receiving channel.
-  // These are the data messages sent by the sending channel.
-
+  // Handles msgs received via the RTCDataChannel
   function handleReceiveMessage(event) {
     var command = JSON.parse(event.data);
-    var el = document.createElement("p");
-    var text = command.type + " time: " + command.currentTime;
-    var txtNode = document.createTextNode(text);
-
-    el.appendChild(txtNode);
-    receiveBox.appendChild(el);
 
     if (command.type === "PLAY") {
       rightVideo.currentTime = command.currentTime;
@@ -208,42 +73,262 @@
       rightVideo.pause();
       rightVideo.currentTime = command.currentTime;
       console.log("Pausing right video at: " + command.currentTime);
+    } else if (command.type == "TEXT") {
+      console.log("Pausing right video at: " + command.currentTime);
+      logMessageInUI(command.message);
     }
+  }
+
+  function logMediaCommandInUI(command) {
+    var text = command.type + " time: " + command.currentTime;
+    logMessageInUI(text);
+  }
+
+  function logMessageInUI(text) {
+    var el = document.createElement("p");
+    var txtNode = document.createTextNode(text);
+    el.appendChild(txtNode);
+    receiveBox.appendChild(el);
+  }
+
+  // Handles clicks on the "Send" button by transmitting
+  // a message to the remote peer.
+  function sendMessage() {
+    var message = messageInputBox.value;
+    sendChannel.send(
+      JSON.stringify({
+        type: "TEXT",
+        message: message,
+      })
+    );
+
+    // Clear the input box and re-focus it, so that we're
+    // ready for the next message.
+    messageInputBox.value = "";
+    messageInputBox.focus();
+  }
+
+  //// NETWORKING ////
+  var pc = null; // RTCPeerConnection for our "local" connection
+  var sendChannel = null; // RTCDataChannel for the local (sender)
+
+  var servers = {
+    iceServers: [
+      { urls: "stun:stun.services.mozilla.com" },
+      { urls: "stun:stun.l.google.com:19302" },
+    ],
+  };
+
+  var isInitiator = false;
+  var isChannelReady = false;
+  var isStarted = false;
+  var room = "foo";
+
+  // Signaling server interaction
+  var socket = io.connect("http://localhost:8080");
+
+  if (room !== "") {
+    socket.emit("create or join", room);
+    console.log("Attempted to create or  join room", room);
+  }
+
+  socket.on("created", function(room) {
+    console.log("Created room " + room);
+    isInitiator = true;
+  });
+
+  socket.on("full", function(room) {
+    console.log("Room " + room + " is full");
+  });
+
+  socket.on("join", function(room) {
+    console.log("Another peer made a request to join room " + room);
+    console.log("This peer is the initiator of room " + room + "!");
+    isChannelReady = true;
+  });
+
+  socket.on("joined", function(room) {
+    console.log("joined: " + room);
+    isChannelReady = true;
+  });
+
+  socket.on("log", function(array) {
+    console.log.apply(console, array);
+  });
+
+  function sendMessageWebSockets(message) {
+    console.log("Client sending message to WS: ", message);
+    socket.emit("message", message);
+  }
+
+  // disconnect
+  window.onbeforeunload = function() {
+    sendMessageWebSockets("bye");
+  };
+
+  // This client receives a message
+  socket.on("message", function(message) {
+    console.log("Client received message:", message);
+    if (message === "got user media") {
+      maybeStart();
+    } else if (message.type === "offer") {
+      if (!isInitiator && !isStarted) {
+        maybeStart();
+      }
+      pc.setRemoteDescription(new RTCSessionDescription(message));
+      doAnswer();
+    } else if (message.type === "answer" && isStarted) {
+      pc.setRemoteDescription(new RTCSessionDescription(message));
+    } else if (message.type === "candidate" && isStarted) {
+      var candidate = new RTCIceCandidate({
+        sdpMLineIndex: message.label,
+        candidate: message.candidate,
+      });
+      pc.addIceCandidate(candidate);
+    } else if (message === "bye" && isStarted) {
+      handleRemoteHangup();
+    }
+  });
+
+  function maybeStart() {
+    console.log(">>>>>>> maybeStart() ", isStarted, isChannelReady);
+    if (!isStarted && isChannelReady) {
+      console.log(">>>>>> creating peer connection");
+      createPeerConnection();
+      isStarted = true;
+      console.log("isInitiator", isInitiator);
+    }
+  }
+
+  function createPeerConnection() {
+    try {
+      pc = new RTCPeerConnection(null);
+      pc.onicecandidate = handleIceCandidate;
+
+      if (isInitiator) {
+        console.log("Creating Data Channel");
+        sendChannel = pc.createDataChannel("data-channel-id");
+        onDataChannelCreated(sendChannel);
+
+        console.log("Creating an offer");
+        pc.createOffer(setLocalAndSendMessage, handleCreateOfferError);
+      } else {
+        pc.ondatachannel = function(event) {
+          console.log("ondatachannel:", event.channel);
+          sendChannel = event.channel;
+          onDataChannelCreated(sendChannel);
+        };
+      }
+      console.log("Created RTCPeerConnnection");
+    } catch (e) {
+      console.log("Failed to create PeerConnection, exception: " + e.message);
+      alert("Cannot create RTCPeerConnection object.");
+      return;
+    }
+  }
+
+  function handleIceCandidate(event) {
+    console.log("icecandidate event: ", event);
+    if (event.candidate) {
+      sendMessageWebSockets({
+        type: "candidate",
+        label: event.candidate.sdpMLineIndex,
+        id: event.candidate.sdpMid,
+        candidate: event.candidate.candidate,
+      });
+    } else {
+      console.log("End of candidates.");
+    }
+  }
+
+  function handleCreateOfferError(event) {
+    console.log("createOffer() error: ", event);
+  }
+
+  function doAnswer() {
+    console.log("Sending answer to peer.");
+    pc.createAnswer().then(
+      setLocalAndSendMessage,
+      onCreateSessionDescriptionError
+    );
+  }
+
+  function setLocalAndSendMessage(sessionDescription) {
+    pc.setLocalDescription(sessionDescription, function() {
+      console.log("setLocalAndSendMessage sending message", sessionDescription);
+      sendMessageWebSockets(sessionDescription);
+    });
+  }
+
+  function onCreateSessionDescriptionError(error) {
+    trace("Failed to create session description: " + error.toString());
+  }
+
+  // Initialize signalling exchange using WS
+  function connectPeers() {
+    sendMessageWebSockets("trying to connect");
+    if (isInitiator) {
+      maybeStart();
+    }
+  }
+
+  function onCreateSessionDescriptionError(error) {
+    trace("Failed to create session description: " + error.toString());
+  }
+
+  // Called when the connection opens and the data
+  // channel is ready to be connected to the remote.
+  function onDataChannelCreated(channel) {
+    console.log("onDataChannelCreated:", channel);
+
+    channel.onmessage = handleReceiveMessage;
+    channel.onopen = handleReceiveChannelStatusChange;
+    channel.onclose = handleReceiveChannelStatusChange;
   }
 
   // Handle status changes on the receiver's channel.
-
   function handleReceiveChannelStatusChange(event) {
-    if (receiveChannel) {
-      console.log(
-        "Receive channel's status has changed to " + receiveChannel.readyState
-      );
-    }
+    console.log("received channel status change");
+    console.log(event);
 
     // Here you would do stuff that needs to be done
     // when the channel's status changes.
+    if (sendChannel && sendChannel.readyState === "open") {
+      console.log(
+        "Receive channel's status has changed to " + sendChannel.readyState
+      );
+      messageInputBox.disabled = false;
+      messageInputBox.focus();
+      sendButton.disabled = false;
+      disconnectButton.disabled = false;
+      connectButton.disabled = true;
+    } else {
+      messageInputBox.disabled = true;
+      sendButton.disabled = true;
+      connectButton.disabled = false;
+      disconnectButton.disabled = true;
+    }
   }
 
-  // Close the connection, including data channels if they're open.
-  // Also update the UI to reflect the disconnected status.
+  function hangup() {
+    console.log("Hanging up.");
+    sendMessage("bye");
+    stop();
+  }
 
-  function disconnectPeers() {
-    // Close the RTCDataChannels if they're open.
+  function handleRemoteHangup() {
+    console.log("Session terminated.");
+    stop();
+    isInitiator = false;
+  }
+
+  function stop() {
+    isStarted = false;
 
     sendChannel.close();
-    receiveChannel.close();
-
-    // Close the RTCPeerConnections
-
-    localConnection.close();
-    remoteConnection.close();
-
     sendChannel = null;
-    receiveChannel = null;
-    localConnection = null;
-    remoteConnection = null;
-
-    // Update user interface elements
+    pc.close();
+    pc = null;
 
     connectButton.disabled = false;
     disconnectButton.disabled = true;
@@ -255,6 +340,17 @@
 
   // Set up an event listener which will run the startup
   // function once the page is done loading.
-
   window.addEventListener("load", startup, false);
 })();
+
+function trace(text) {
+  if (text[text.length - 1] === "\n") {
+    text = text.substring(0, text.length - 1);
+  }
+  if (window.performance) {
+    var now = (window.performance.now() / 1000).toFixed(3);
+    console.log(now + ": " + text);
+  } else {
+    console.log(text);
+  }
+}
