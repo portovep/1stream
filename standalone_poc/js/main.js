@@ -7,15 +7,13 @@
   var messageInputBox = null;
   var receiveBox = null;
 
-  var leftVideo = null;
-  var rightVideo = null;
+  var video = null;
 
   function startup() {
     console.log("Page done loading, starting app");
 
     connectButton = document.getElementById("connectButton");
-    leftVideo = document.getElementById("leftVideo");
-    rightVideo = document.getElementById("rightVideo");
+    video = document.getElementById("video");
     disconnectButton = document.getElementById("disconnectButton");
     sendButton = document.getElementById("sendButton");
     messageInputBox = document.getElementById("message");
@@ -26,8 +24,8 @@
     disconnectButton.addEventListener("click", hangup, false);
     sendButton.addEventListener("click", sendMessage, false);
 
-    leftVideo.addEventListener("play", (event) => {
-      const currentTime = parseFloat(leftVideo.currentTime.toFixed(2));
+    video.addEventListener("play", (event) => {
+      const currentTime = parseFloat(video.currentTime.toFixed(2));
       console.log("Play" + currentTime);
       sendChannel.send(
         JSON.stringify({
@@ -37,8 +35,8 @@
       );
     });
 
-    leftVideo.addEventListener("pause", (event) => {
-      const currentTime = parseFloat(leftVideo.currentTime.toFixed(2));
+    video.addEventListener("pause", (event) => {
+      const currentTime = parseFloat(video.currentTime.toFixed(2));
       console.log("Pause" + currentTime);
       sendChannel.send(
         JSON.stringify({
@@ -48,16 +46,16 @@
       );
     });
 
-    // rightVideo.ontimeupdate = (event) => {
+    // video.ontimeupdate = (event) => {
     //   console.log(
-    //     "Right video: The currentTime attribute has been updated. Again."
+    //     "video: The currentTime attribute has been updated. Again."
     //   );
     //   console.log(event);
     // };
 
-    rightVideo.addEventListener("pause", (e) => {
-      console.log("right video has been paused");
-      console.log("right video current time" + rightVideo.currentTime);
+    video.addEventListener("pause", (e) => {
+      console.log("video has been paused");
+      console.log("video current time" + video.currentTime);
     });
   }
 
@@ -66,15 +64,15 @@
     var command = JSON.parse(event.data);
 
     if (command.type === "PLAY") {
-      rightVideo.currentTime = command.currentTime;
-      rightVideo.play();
-      console.log("Playing right video at: " + command.currentTime);
-      logMediaCommandInUI(command)
+      video.currentTime = command.currentTime;
+      video.play();
+      console.log("Playing video at: " + command.currentTime);
+      logMediaCommandInUI(command);
     } else if (command.type == "PAUSE") {
-      rightVideo.pause();
-      //rightVideo.currentTime = command.currentTime;
-      console.log("Pausing right video at: " + command.currentTime);
-      logMediaCommandInUI(command)
+      video.pause();
+      //video.currentTime = command.currentTime;
+      console.log("Pausing video at: " + command.currentTime);
+      logMediaCommandInUI(command);
     } else if (command.type == "TEXT") {
       logMessageInUI(command.message);
     }
@@ -127,6 +125,7 @@
 
   // Signaling server interaction
   var socket = io.connect("http://localhost:8080");
+  // var socket = io.connect("http://88.17.189.161:8080");
 
   if (room !== "") {
     socket.emit("create or join", room);
@@ -203,7 +202,7 @@
 
   function createPeerConnection() {
     try {
-      pc = new RTCPeerConnection(servers);
+      pc = new RTCPeerConnection();
       pc.onicecandidate = handleIceCandidate;
 
       if (isInitiator) {
