@@ -26,36 +26,28 @@
 
     video.addEventListener("play", (event) => {
       const currentTime = parseFloat(video.currentTime.toFixed(2));
-      console.log("Play" + currentTime);
-      sendChannel.send(
-        JSON.stringify({
-          type: "PLAY",
-          currentTime: currentTime,
-        })
-      );
+      console.log("Video played" + currentTime);
+      if (isInitiator) {
+        sendChannel.send(
+          JSON.stringify({
+            type: "PLAY",
+            currentTime: currentTime,
+          })
+        );
+      }
     });
 
     video.addEventListener("pause", (event) => {
-      const currentTime = parseFloat(video.currentTime.toFixed(2));
-      console.log("Pause" + currentTime);
-      sendChannel.send(
-        JSON.stringify({
-          type: "PAUSE",
-          currentTime: currentTime,
-        })
-      );
-    });
-
-    // video.ontimeupdate = (event) => {
-    //   console.log(
-    //     "video: The currentTime attribute has been updated. Again."
-    //   );
-    //   console.log(event);
-    // };
-
-    video.addEventListener("pause", (e) => {
-      console.log("video has been paused");
-      console.log("video current time" + video.currentTime);
+      const currentTime = video.currentTime
+      console.log("Video paused" + currentTime);
+      if (isInitiator) {
+        sendChannel.send(
+          JSON.stringify({
+            type: "PAUSE",
+            currentTime: currentTime,
+          })
+        );
+      }
     });
   }
 
@@ -64,14 +56,14 @@
     var command = JSON.parse(event.data);
 
     if (command.type === "PLAY") {
+      console.log("Play command received, local video time: " + video.currentTime + ", new time: " + command.currentTime);
       video.currentTime = command.currentTime;
       video.play();
-      console.log("Playing video at: " + command.currentTime);
       logMediaCommandInUI(command);
     } else if (command.type == "PAUSE") {
+      console.log("Pause command received, local video time: " + video.currentTime + ", new time: " + command.currentTime);
       video.pause();
-      //video.currentTime = command.currentTime;
-      console.log("Pausing video at: " + command.currentTime);
+      video.currentTime = command.currentTime;
       logMediaCommandInUI(command);
     } else if (command.type == "TEXT") {
       logMessageInUI(command.message);
