@@ -55,6 +55,34 @@
     </div>
 
     <div class="controlbox">
+      <div class="messagebox">
+        <label for="room"
+          >Enter a room name:
+          <input
+            type="text"
+            name="room"
+            id="room"
+            placeholder="Room name"
+            inputmode="latin"
+            size="60"
+            maxlength="120"
+          />
+        </label>
+      </div>
+      <button id="connectButtonWS" name="connectButtonWS" class="buttonleft">
+        Connect to room
+      </button>
+      <button
+        id="disconnectButtonWS"
+        name="disconnectButtonWS"
+        class="buttonright"
+        disabled
+      >
+        Disconnect from room
+      </button>
+    </div>
+
+    <div class="controlbox">
       <button id="connectButton" name="connectButton" class="buttonleft">
         Connect
       </button>

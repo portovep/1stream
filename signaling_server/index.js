@@ -5,6 +5,8 @@ var nodeStatic = require("node-static");
 var http = require("http");
 var socketIO = require("socket.io");
 
+console.log("starting server");
+
 var fileServer = new nodeStatic.Server();
 var app = http
   .createServer(function(req, res) {
@@ -66,8 +68,9 @@ io.sockets.on("connection", function(socket) {
     }
   });
 
-  socket.on("bye", function() {
-    console.log("Client ID " + socket.id + " said bye");
+  socket.on("disconnect", function() {
     socket.disconnect(true);
+    console.log("Client ID " + socket.id + " left the room");
+    log("Client ID " + socket.id + " left the room");
   });
 });

@@ -5,6 +5,7 @@
   var disconnectButton = null;
   var sendButton = null;
   var messageInputBox = null;
+  var roomInputBox = null;
   var receiveBox = null;
 
   var video = null;
@@ -12,14 +13,19 @@
   function startup() {
     console.log("Page done loading, starting app");
 
+    connectButtonWS = document.getElementById("connectButtonWS");
     connectButton = document.getElementById("connectButton");
-    video = document.getElementById("video");
+    disconnectButtonWS = document.getElementById("disconnectButtonWS");
     disconnectButton = document.getElementById("disconnectButton");
+    video = document.getElementById("video");
     sendButton = document.getElementById("sendButton");
     messageInputBox = document.getElementById("message");
+    roomInputBox = document.getElementById("room");
     receiveBox = document.getElementById("receivebox");
 
     // Set event listeners for user interface widgets
+    connectButtonWS.addEventListener("click", connectToRoom, false);
+    disconnectButtonWS.addEventListener("click", disconnectFromRoom, false);
     connectButton.addEventListener("click", connectPeers, false);
     disconnectButton.addEventListener("click", hangup, false);
     sendButton.addEventListener("click", sendMessage, false);
@@ -128,14 +134,11 @@
   // Signaling server interaction
   var socket = io.connect("http://localhost:8085");
 
-  if (room !== "") {
-    socket.emit("create or join", room);
-    console.log("Attempted to create or  join room", room);
-  }
-
   socket.on("created", function(room) {
     console.log("Created room " + room);
     isInitiator = true;
+    disconnectButtonWS.disabled = false;
+    connectButtonWS.disabled = true;
   });
 
   socket.on("full", function(room) {
@@ -151,6 +154,8 @@
   socket.on("joined", function(room) {
     console.log("joined: " + room);
     isChannelReady = true;
+    disconnectButtonWS.disabled = false;
+    connectButtonWS.disabled = true;
   });
 
   socket.on("log", function(array) {
@@ -164,7 +169,7 @@
 
   // disconnect
   window.onbeforeunload = function() {
-    sendMessageWebSockets("bye");
+    disconnectFromRoom();
   };
 
   // This client receives a message
@@ -265,6 +270,13 @@
     trace("Failed to create session description: " + error.toString());
   }
 
+  function connectToRoom() {
+    var room = roomInputBox.value;
+    if (room !== "") {
+      socket.emit("create or join", room);
+      console.log("Attempted to create or  join room", room);
+    }
+  }
   // Initialize signalling exchange using WS
   function connectPeers() {
     sendMessageWebSockets("trying to connect");
@@ -309,6 +321,13 @@
       connectButton.disabled = false;
       disconnectButton.disabled = true;
     }
+  }
+
+  function disconnectFromRoom() {
+    console.log("disconnecting from room" + room);
+    sendMessageWebSockets("disconnect");
+    disconnectButtonWS.disabled = true;
+    connectButtonWS.disabled = false;
   }
 
   function hangup() {
