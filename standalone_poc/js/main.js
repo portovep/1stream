@@ -38,7 +38,7 @@
     });
 
     video.addEventListener("pause", (event) => {
-      const currentTime = video.currentTime
+      const currentTime = video.currentTime;
       console.log("Video paused" + currentTime);
       if (isInitiator) {
         sendChannel.send(
@@ -56,12 +56,22 @@
     var command = JSON.parse(event.data);
 
     if (command.type === "PLAY") {
-      console.log("Play command received, local video time: " + video.currentTime + ", new time: " + command.currentTime);
+      console.log(
+        "Play command received, local video time: " +
+          video.currentTime +
+          ", new time: " +
+          command.currentTime
+      );
       video.currentTime = command.currentTime;
       video.play();
       logMediaCommandInUI(command);
     } else if (command.type == "PAUSE") {
-      console.log("Pause command received, local video time: " + video.currentTime + ", new time: " + command.currentTime);
+      console.log(
+        "Pause command received, local video time: " +
+          video.currentTime +
+          ", new time: " +
+          command.currentTime
+      );
       video.pause();
       video.currentTime = command.currentTime;
       logMediaCommandInUI(command);
@@ -116,8 +126,7 @@
   var room = "foo";
 
   // Signaling server interaction
-  var socket = io.connect("http://localhost:8080");
-  // var socket = io.connect("http://88.17.189.161:8080");
+  var socket = io.connect("http://localhost:8085");
 
   if (room !== "") {
     socket.emit("create or join", room);

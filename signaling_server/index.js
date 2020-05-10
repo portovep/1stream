@@ -10,7 +10,9 @@ var app = http
   .createServer(function(req, res) {
     fileServer.serve(req, res);
   })
-  .listen(8080);
+  .listen(8085);
+
+console.log("\nStarting signaling server");
 
 var io = socketIO.listen(app);
 io.sockets.on("connection", function(socket) {
