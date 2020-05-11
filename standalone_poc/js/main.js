@@ -132,7 +132,8 @@
   var room = "foo";
 
   // Signaling server interaction
-  var socket = io.connect("http://localhost:8085");
+  // var socket = io.connect("http://localhost:8085");
+  var socket = io.connect("http://3.248.204.170:8085");
 
   socket.on("created", function(room) {
     console.log("Created room " + room);
@@ -208,7 +209,7 @@
 
   function createPeerConnection() {
     try {
-      pc = new RTCPeerConnection();
+      pc = new RTCPeerConnection(servers);
       pc.onicecandidate = handleIceCandidate;
 
       if (isInitiator) {
