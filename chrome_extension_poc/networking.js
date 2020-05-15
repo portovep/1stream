@@ -1,36 +1,75 @@
+var video = null;
+var self = this;
+function setVideo(video) {
+  self.video = video;
+}
+
 //// BINDINGS AND VIDEO SYNC ////
+
+var isRemotePlay = false;
+var isRemotePause = false;
+
 function bindEventListeners(video) {
   video.addEventListener("play", (event) => {
-    const currentTime = parseFloat(video.currentTime.toFixed(2));
-    console.log("Video played" + currentTime);
-    if (isInitiator) {
+    if (isRemotePlay) {
+      console.log("Video played from remote command");
+      isRemotePlay = false;
+      return;
+    }
+    const currentTime = video.currentTime;
+    if (sendChannel) {
+      console.log("Sending PLAY command, currentTime: " + currentTime);
       sendChannel.send(
         JSON.stringify({
           type: "PLAY",
           currentTime: currentTime,
         })
       );
+    } else {
+      console.log("Send channel is not ready yet")
     }
   });
 
   video.addEventListener("pause", (event) => {
-    const currentTime = video.currentTime;
-    console.log("Video paused" + currentTime);
-    if (isInitiator) {
+    if (isRemotePause) {
+      console.log("Video pause from remote command");
+      isRemotePause = false;
+      return;
+    }
+
+    const currentTime = parseFloat(self.video.currentTime);
+    if (sendChannel) {
+      console.log("Sending PAUSE command, currentTime: " + currentTime);
       sendChannel.send(
         JSON.stringify({
           type: "PAUSE",
           currentTime: currentTime,
         })
       );
+    } else {
+      console.log("Send channel is not ready yet")
     }
   });
 }
 
-var video = null;
-var self = this;
-function setVideo(video) {
-  self.video = video;
+function syncPlay(video, currentTime) {
+  console.log(
+    "Play command received, local video time: " + video.currentTime + ", new time: " + currentTime
+  );
+
+  isRemotePlay = true;
+  video.currentTime = currentTime;
+  video.play();
+}
+
+function syncPause(video, currentTime) {
+  console.log(
+    "Pause command received, local video time: " + video.currentTime + ", new time: " + currentTime
+  );
+
+  isRemotePause = true;
+  video.currentTime = currentTime;
+  video.pause();
 }
 
 // Handles msgs received via the RTCDataChannel
@@ -38,37 +77,12 @@ function handleReceiveMessage(event) {
   var command = JSON.parse(event.data);
 
   if (command.type === "PLAY") {
-    console.log(
-      "Play command received, local video time: " +
-        self.video.currentTime +
-        ", new time: " +
-        command.currentTime
-    );
-    // video.currentTime = command.currentTime;
-    video.play();
-    logMediaCommandInUI(command);
+    syncPlay(video, command.currentTime);
   } else if (command.type == "PAUSE") {
-    console.log(
-      "Pause command received, local video time: " +
-        video.currentTime +
-        ", new time: " +
-        command.currentTime
-    );
-    video.pause();
-    // video.currentTime = command.currentTime;
-    logMediaCommandInUI(command);
+    syncPause(video, command.currentTime);
   } else if (command.type == "TEXT") {
-    logMessageInUI(command.message);
+    console.log(command.message);
   }
-}
-
-function logMediaCommandInUI(command) {
-  var text = command.type + " time: " + command.currentTime;
-  logMessageInUI(text);
-}
-
-function logMessageInUI(text) {
-  console.log(text);
 }
 
 //// NETWORKING //
