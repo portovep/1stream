@@ -9,7 +9,6 @@
     "persistent": false
   },
   "page_action": {
-    // "default_popup": "popup.html",
     "default_icon": {
       "16": "images/get_started16.png",
       "32": "images/get_started32.png",
@@ -26,7 +25,10 @@
   "manifest_version": 2,
   "content_scripts": [
     {
-      "matches": ["https://www.netflix.com/watch/*"],
+      "matches": [
+        "https://www.netflix.com/watch/*",
+        "https://www.primevideo.com/detail/*"
+      ],
       "js": ["lib/socket.io.js", "contentScript.js", "networking.js"]
     }
   ]

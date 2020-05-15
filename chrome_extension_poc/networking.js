@@ -27,9 +27,10 @@ function bindEventListeners(video) {
   });
 }
 
-let video = null;
+var video = null;
+var self = this;
 function setVideo(video) {
-  video = video;
+  self.video = video;
 }
 
 // Handles msgs received via the RTCDataChannel
@@ -39,11 +40,11 @@ function handleReceiveMessage(event) {
   if (command.type === "PLAY") {
     console.log(
       "Play command received, local video time: " +
-        video.currentTime +
+        self.video.currentTime +
         ", new time: " +
         command.currentTime
     );
-    video.currentTime = command.currentTime;
+    // video.currentTime = command.currentTime;
     video.play();
     logMediaCommandInUI(command);
   } else if (command.type == "PAUSE") {
@@ -54,7 +55,7 @@ function handleReceiveMessage(event) {
         command.currentTime
     );
     video.pause();
-    video.currentTime = command.currentTime;
+    // video.currentTime = command.currentTime;
     logMediaCommandInUI(command);
   } else if (command.type == "TEXT") {
     logMessageInUI(command.message);
@@ -67,10 +68,7 @@ function logMediaCommandInUI(command) {
 }
 
 function logMessageInUI(text) {
-  var el = document.createElement("p");
-  var txtNode = document.createTextNode(text);
-  el.appendChild(txtNode);
-  receiveBox.appendChild(el);
+  console.log(text);
 }
 
 //// NETWORKING //

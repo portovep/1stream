@@ -6,6 +6,9 @@ chrome.runtime.onInstalled.addListener(function() {
           new chrome.declarativeContent.PageStateMatcher({
             pageUrl: { hostEquals: "www.netflix.com" },
           }),
+          new chrome.declarativeContent.PageStateMatcher({
+            pageUrl: { hostEquals: "www.primevideo.com" },
+          }),
         ],
         actions: [new chrome.declarativeContent.ShowPageAction()],
       },
@@ -27,6 +30,10 @@ chrome.webNavigation.onCompleted.addListener(
     url: [
       {
         urlMatches: "https://www.netflix.com/watch/*",
+        queryContains: "roomName",
+      },
+      {
+        urlMatches: "https://www.primevideo.com/detail/*",
         queryContains: "roomName",
       },
     ],
