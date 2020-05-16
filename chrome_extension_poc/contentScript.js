@@ -1,13 +1,11 @@
 console.log("Waiting for START command from extension");
 
-function startup() {
+async function startup() {
   var roomName = generateRoomName();
   connectToSignalingServer(roomName);
 
-  var video = getVideoElement();
+  var video = await getVideoElement();
   setVideo(video);
-  console.log("got video element", video);
-
   video.pause();
 
   console.log("configuring listeners");
@@ -18,12 +16,13 @@ function startup() {
   reportStatusToContentScript("STARTED");
 }
 
-function connect() {
+async function connect() {
   const roomName = extractRoomNameFromURL();
   console.log("Connecting to room name: " + roomName);
 
-  var video = getVideoElement();
+  var video = await getVideoElement();
   setVideo(video);
+  video.pause();
 
   console.log("configuring listeners");
   bindEventListeners(video);
@@ -86,28 +85,24 @@ function getVideoElement() {
   var url = window.location.href;
 
   if (url.includes("netflix") || url.includes("youtube")) {
-    var checkExist = setInterval(function() {
-      var videoFound = document.getElementsByTagName("video")[0];
-      console.log("Looking for video");
-      if (videoFound.currentTime) {
-        setVideo(videoFound);
-        console.log("Found video");
-        clearInterval(checkExist);
-      }
-    }, 1000); // check every 100ms
-    return document.getElementsByTagName("video")[0];
+    return retryUntilFound(() => document.getElementsByTagName("video")[0]);
   } else if (url.includes("prime")) {
-    var checkExist = setInterval(function() {
-      var videoFound = document.querySelectorAll("video[style]");
-      console.log("Looking for video");
-      if (videoFound) {
-        setVideo(videoFound);
-        console.log("Found video");
-        clearInterval(checkExist);
-      }
-    }, 1000); // check every 100ms
-    return null;
+    return retryUntilFound(() => document.querySelectorAll("video[style]"));
   } else {
     throw "Cannot find a video element for this page";
   }
+}
+
+function retryUntilFound(query) {
+  return new Promise((resolve, reject) => {
+    var checkExist = setInterval(function() {
+      var videoFound = query();
+      console.log("Looking for video");
+      if (videoFound) {
+        console.log("Got video: ", video);
+        clearInterval(checkExist);
+        resolve(videoFound);
+      }
+    }, 1000);
+  });
 }
