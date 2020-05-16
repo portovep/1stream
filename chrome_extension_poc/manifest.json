@@ -27,7 +27,8 @@
     {
       "matches": [
         "https://www.netflix.com/watch/*",
-        "https://www.primevideo.com/detail/*"
+        "https://www.primevideo.com/detail/*",
+        "https://www.youtube.com/watch*" 
       ],
       "js": ["lib/socket.io.js", "contentScript.js", "networking.js"]
     }

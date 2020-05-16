@@ -7,6 +7,9 @@ chrome.runtime.onInstalled.addListener(function() {
             pageUrl: { hostEquals: "www.netflix.com" },
           }),
           new chrome.declarativeContent.PageStateMatcher({
+            pageUrl: { hostEquals: "www.youtube.com" },
+          }),
+          new chrome.declarativeContent.PageStateMatcher({
             pageUrl: { hostEquals: "www.primevideo.com" },
           }),
         ],
@@ -18,9 +21,7 @@ chrome.runtime.onInstalled.addListener(function() {
 
 chrome.webNavigation.onCompleted.addListener(
   function(event) {
-    chrome.tabs.sendMessage(event.tabId, { command: "CONNECT" }, function(
-      response
-    ) {
+    chrome.tabs.sendMessage(event.tabId, { command: "CONNECT" }, function(response) {
       console.log(
         "Tab with ID " + event + " responded with status: " + response.status
       );
@@ -34,6 +35,10 @@ chrome.webNavigation.onCompleted.addListener(
       },
       {
         urlMatches: "https://www.primevideo.com/detail/*",
+        queryContains: "roomName",
+      },
+      {
+        urlMatches: "https://www.youtube.com/watch*",
         queryContains: "roomName",
       },
     ],

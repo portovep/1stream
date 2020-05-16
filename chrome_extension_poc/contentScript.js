@@ -5,6 +5,7 @@ function startup() {
   connectToSignalingServer(roomName);
 
   var video = getVideoElement();
+  setVideo(video);
   console.log("got video element", video);
 
   video.pause();
@@ -23,6 +24,9 @@ function connect() {
 
   var video = getVideoElement();
   setVideo(video);
+
+  console.log("configuring listeners");
+  bindEventListeners(video);
 
   connectToSignalingServer(roomName);
 }
@@ -81,7 +85,7 @@ function uuidv4() {
 function getVideoElement() {
   var url = window.location.href;
 
-  if (url.includes("netflix")) {
+  if (url.includes("netflix") || url.includes("youtube")) {
     var checkExist = setInterval(function() {
       var videoFound = document.getElementsByTagName("video")[0];
       console.log("Looking for video");
