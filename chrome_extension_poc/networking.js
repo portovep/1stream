@@ -1,11 +1,11 @@
 var video = null;
 var self = this;
+
 function setVideo(video) {
   self.video = video;
 }
 
 //// BINDINGS AND VIDEO SYNC ////
-
 var isRemotePlay = false;
 var isRemotePause = false;
 
@@ -16,17 +16,11 @@ function bindEventListeners(video) {
       isRemotePlay = false;
       return;
     }
-    const currentTime = video.currentTime;
-    if (sendChannel) {
-      console.log("Sending PLAY command, currentTime: " + currentTime);
-      sendChannel.send(
-        JSON.stringify({
-          type: "PLAY",
-          currentTime: currentTime,
-        })
-      );
+
+    if (isSendChannelReady()) {
+      sendPlayCommand(video);
     } else {
-      console.log("Send channel is not ready yet")
+      console.log("Cannot send play command, send channel is not ready yet");
     }
   });
 
@@ -37,24 +31,42 @@ function bindEventListeners(video) {
       return;
     }
 
-    const currentTime = parseFloat(self.video.currentTime);
-    if (sendChannel) {
-      console.log("Sending PAUSE command, currentTime: " + currentTime);
-      sendChannel.send(
-        JSON.stringify({
-          type: "PAUSE",
-          currentTime: currentTime,
-        })
-      );
+    if (isSendChannelReady()) {
+      sendPauseCommand();
     } else {
-      console.log("Send channel is not ready yet")
+      console.log("Cannot send pause command, send channel is not ready yet");
     }
   });
 }
 
+function sendPlayCommand(video) {
+  const currentTime = parseFloat(self.video.currentTime);
+  console.log("Sending PLAY command, currentTime: " + currentTime);
+  sendChannel.send(
+    JSON.stringify({
+      type: "PLAY",
+      currentTime: currentTime,
+    })
+  );
+}
+
+function sendPauseCommand() {
+  const currentTime = parseFloat(self.video.currentTime);
+  console.log("Sending PAUSE command, currentTime: " + currentTime);
+  sendChannel.send(
+    JSON.stringify({
+      type: "PAUSE",
+      currentTime: currentTime,
+    })
+  );
+}
+
 function syncPlay(video, currentTime) {
   console.log(
-    "Play command received, local video time: " + video.currentTime + ", new time: " + currentTime
+    "Play command received, local video time: " +
+      video.currentTime +
+      ", new time: " +
+      currentTime
   );
 
   isRemotePlay = true;
@@ -64,7 +76,10 @@ function syncPlay(video, currentTime) {
 
 function syncPause(video, currentTime) {
   console.log(
-    "Pause command received, local video time: " + video.currentTime + ", new time: " + currentTime
+    "Pause command received, local video time: " +
+      video.currentTime +
+      ", new time: " +
+      currentTime
   );
 
   isRemotePause = true;
@@ -100,9 +115,10 @@ var servers = {
 var isInitiator = false;
 var isChannelReady = false;
 var isStarted = false;
-var room = "foo";
+var room = null;
 
 function connectToSignalingServer(roomName) {
+  room = roomName;
   // Signaling server interaction
   console.log("Initializing connection to signaling server");
   // var socket = io.connect("http://localhost:8085");
@@ -157,7 +173,7 @@ function connectToSignalingServer(roomName) {
     }
   });
 
-  connectToRoom(roomName);
+  connectToRoom(room);
 }
 
 function sendMessageWebSockets(message) {
@@ -189,7 +205,7 @@ function createPeerConnection() {
 
     if (isInitiator) {
       console.log("Creating Data Channel");
-      sendChannel = pc.createDataChannel("data-channel-id");
+      sendChannel = pc.createDataChannel(room);
       onDataChannelCreated(sendChannel);
 
       console.log("Creating an offer");
@@ -281,28 +297,24 @@ function handleReceiveChannelStatusChange(event) {
 
   // Here you would do stuff that needs to be done
   // when the channel's status changes.
-  if (sendChannel && sendChannel.readyState === "open") {
+  if (isSendChannelReady()) {
     console.log(
       "Receive channel's status has changed to " + sendChannel.readyState
     );
-    // messageInputBox.disabled = false;
-    // messageInputBox.focus();
-    // sendButton.disabled = false;
-    // disconnectButton.disabled = false;
-    // connectButton.disabled = true;
-  } else {
-    // messageInputBox.disabled = true;
-    // sendButton.disabled = true;
-    // connectButton.disabled = false;
-    // disconnectButton.disabled = true;
+    if (isInitiator) {
+      console.log("Performing initial video sync");
+      sendPauseCommand();
+    }
   }
+}
+
+function isSendChannelReady() {
+  return sendChannel && sendChannel.readyState === "open";
 }
 
 function disconnectFromRoom() {
   console.log("disconnecting from room" + room);
   sendMessageWebSockets("disconnect");
-  // disconnectButtonWS.disabled = true;
-  // connectButtonWS.disabled = false;
 }
 
 function hangup() {
@@ -324,12 +336,6 @@ function stop() {
   sendChannel = null;
   pc.close();
   pc = null;
-
-  // connectButton.disabled = false;
-  // disconnectButton.disabled = true;
-  // sendButton.disabled = true;
-  // messageInputBox.value = "";
-  // messageInputBox.disabled = true;
 }
 
 function trace(text) {
