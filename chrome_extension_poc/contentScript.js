@@ -65,12 +65,14 @@ function printURLToShare(roomName) {
   const urlParams = new URL(document.location).searchParams;
   urlParams.append("roomName", roomName);
 
-  console.log(
+  const sharableURL =
     document.location.origin +
-      document.location.pathname +
-      "?" +
-      urlParams.toString()
-  );
+    document.location.pathname +
+    "?" +
+    urlParams.toString();
+
+  console.log(sharableURL);
+  alert(sharableURL);
 }
 
 function uuidv4() {
@@ -87,7 +89,14 @@ function getVideoElement() {
   if (url.includes("netflix") || url.includes("youtube")) {
     return retryUntilFound(() => document.getElementsByTagName("video")[0]);
   } else if (url.includes("prime")) {
-    return retryUntilFound(() => document.querySelectorAll("video[style]"));
+    var resumeButton = [...document.querySelectorAll("a[href]")].find((e) =>
+      e.href.includes("/detail")
+    );
+
+    if (resumeButton) {
+      resumeButton.click();
+    }
+    return retryUntilFound(() => document.getElementsByTagName("video")[0]);
   } else {
     throw "Cannot find a video element for this page";
   }
@@ -96,12 +105,12 @@ function getVideoElement() {
 function retryUntilFound(query) {
   return new Promise((resolve, reject) => {
     var checkExist = setInterval(function() {
-      var videoFound = query();
+      var video = query();
       console.log("Looking for video");
-      if (videoFound) {
+      if (video.currentTime) {
         console.log("Got video: ", video);
         clearInterval(checkExist);
-        resolve(videoFound);
+        resolve(video);
       }
     }, 1000);
   });

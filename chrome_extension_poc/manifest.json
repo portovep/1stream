@@ -2,7 +2,13 @@
   "name": "BingeParty",
   "version": "1.0",
   "description": "Social watching for everybody",
-  "permissions": ["activeTab", "declarativeContent", "webNavigation"],
+  "permissions": [
+    "activeTab",
+    "declarativeContent",
+    "webNavigation",
+    "tabs",
+    "https://*/"
+  ],
   "options_page": "options.html",
   "background": {
     "scripts": ["background.js"],
@@ -28,7 +34,7 @@
       "matches": [
         "https://www.netflix.com/watch/*",
         "https://www.primevideo.com/detail/*",
-        "https://www.youtube.com/watch*" 
+        "https://www.youtube.com/watch*"
       ],
       "js": ["lib/socket.io.js", "contentScript.js", "networking.js"]
     }
