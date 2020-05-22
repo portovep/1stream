@@ -36,7 +36,7 @@
         "https://www.primevideo.com/detail/*",
         "https://www.youtube.com/watch*"
       ],
-      "js": ["lib/socket.io.js", "contentScript.js", "networking.js"]
+      "js": ["lib/socket.io.js", "lib/peerjs.min.js", "room.js", "contentScript.js"]
     }
   ]
 }
