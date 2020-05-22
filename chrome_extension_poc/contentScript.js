@@ -1,17 +1,23 @@
 console.log("Waiting for START command from extension");
 
-async function startup() {
-  var roomName = generateRoomName();
-  connectToSignalingServer(roomName);
+var video;
 
-  var video = await getVideoElement();
-  setVideo(video);
+async function startup() {
+  var peer = new Peer();
+  var peerId = await openPeer(peer)
+
+  peer.on('connection', function(conn) { 
+    console.log('Connection received in peer : ' + peerId);
+    bindConnection(conn)
+  });
+
+  video = await getVideoElement();
   video.pause();
 
   console.log("configuring listeners");
   bindEventListeners(video);
 
-  printURLToShare(roomName);
+  printURLToShare(peerId);
 
   reportStatusToContentScript("STARTED");
 }
@@ -20,15 +26,151 @@ async function connect() {
   const roomName = extractRoomNameFromURL();
   console.log("Connecting to room name: " + roomName);
 
-  var video = await getVideoElement();
-  setVideo(video);
+  var peer = new Peer();
+  var peerId = await openPeer(peer)
+  console.log("My peer id is " + peerId)
+
+  bindConnection(peer.connect(roomName));
+
+  video = await getVideoElement();
   video.pause();
 
   console.log("configuring listeners");
   bindEventListeners(video);
-
-  connectToSignalingServer(roomName);
 }
+
+function openPeer(peer) {
+  return new Promise(function(resolve, reject) {
+    peer.on('open', resolve)
+  });
+}
+
+function logPeerErrors(peer) {
+  peer.on('error', function(err) {
+    console.log("Fatal peer error " + err)
+  });
+}
+
+var connection;
+function bindConnection(conn) {
+  connection = conn
+
+  conn.on('open', function() {
+    console.log('Connection is now opened');
+  
+  });
+
+  conn.on('close', function() {
+    console.log('Connection is now closed');
+  
+  });
+
+  conn.on('error ', function(err) {
+    console.log('Connection error ' + err);
+  
+  });
+
+  // Receive messages
+  conn.on('data', function(data) {
+    handleReceiveMessage(data)
+  });
+}
+
+//// BINDINGS AND VIDEO SYNC ////
+var isRemotePlay = false;
+var isRemotePause = false;
+
+function bindEventListeners(video) {
+  video.addEventListener("play", (event) => {
+    if (isRemotePlay) {
+      console.log("Video played from remote command");
+      isRemotePlay = false;
+      return;
+    }
+
+    if (connection) {
+      sendPlayCommand(connection, video);
+    } else {
+      console.log("Cannot send play command, connection is not ready yet");
+    }
+  });
+
+  video.addEventListener("pause", (event) => {
+    if (isRemotePause) {
+      console.log("Video pause from remote command");
+      isRemotePause = false;
+      return;
+    }
+
+    if (connection) {
+      sendPauseCommand(connection, video);
+    } else {
+      console.log("Cannot send pause command, connection is not ready yet");
+    }
+  });
+}
+
+function sendPlayCommand(connection, video) {
+  const currentTime = parseFloat(video.currentTime);
+  console.log("Sending PLAY command, currentTime: " + currentTime);
+  connection.send(
+    JSON.stringify({
+      type: "PLAY",
+      currentTime: currentTime,
+    })
+  );
+}
+
+function sendPauseCommand(connection, video) {
+  const currentTime = parseFloat(video.currentTime);
+  console.log("Sending PAUSE command, currentTime: " + currentTime);
+  connection.send(
+    JSON.stringify({
+      type: "PAUSE",
+      currentTime: currentTime,
+    })
+  );
+}
+
+function syncPlay(video, currentTime) {
+  console.log(
+    "Play command received, local video time: " +
+      video.currentTime +
+      ", new time: " +
+      currentTime
+  );
+
+  isRemotePlay = true;
+  video.currentTime = currentTime;
+  video.play();
+}
+
+function syncPause(video, currentTime) {
+  console.log(
+    "Pause command received, local video time: " +
+      video.currentTime +
+      ", new time: " +
+      currentTime
+  );
+
+  isRemotePause = true;
+  video.currentTime = currentTime;
+  video.pause();
+}
+
+// Handles msgs received via the RTCDataChannel
+function handleReceiveMessage(data) {
+  var command = JSON.parse(data);
+
+  if (command.type === "PLAY") {
+    syncPlay(video, command.currentTime);
+  } else if (command.type == "PAUSE") {
+    syncPause(video, command.currentTime);
+  } else if (command.type == "TEXT") {
+    console.log(command.message);
+  }
+}
+
 
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
   console.log("Received command " + request.command + " from extension");
