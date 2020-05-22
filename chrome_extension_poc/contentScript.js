@@ -225,10 +225,26 @@ function uuidv4() {
   });
 }
 
+function setCurrentTime(newCurrentTime) {
+  var url = window.location.href;
+  if (url.includes("netflix")) {
+    console.log("Setting Netflix Current Time");
+    window.postMessage(
+      { type: "SET_CURRENT_TIME", currentTime: newCurrentTime },
+      "*"
+    );
+  } else {
+    video.currentTime = newCurrentTime;
+  }
+}
+
 function getVideoElement() {
   var url = window.location.href;
 
-  if (url.includes("netflix") || url.includes("youtube")) {
+  if (url.includes("netflix")) {
+    injectNetflixHandler();
+    return retryUntilFound(() => document.getElementsByTagName("video")[0]);
+  } else if (url.includes("youtube")) {
     return retryUntilFound(() => document.getElementsByTagName("video")[0]);
   } else if (url.includes("prime")) {
     var resumeButton = [...document.querySelectorAll("a[href]")].find((e) =>
@@ -257,3 +273,31 @@ function retryUntilFound(query) {
     }, 1000);
   });
 }
+
+function injectNetflixHandler() {
+  var s = document.createElement("script");
+  s.textContent = netflixHandlerScriptContent;
+  (document.head || document.documentElement).appendChild(s);
+  s.onload = function() {
+    s.remove();
+  };
+}
+
+const netflixHandlerScriptContent = `setTimeout(function() {
+  window.addEventListener('message', function(event) {
+    console.log('page javascript got message:', event);
+
+    const videoPlayer = window.netflix.appContext.state.playerApp.getAPI()
+    .videoPlayer;
+    const playerSessionId = videoPlayer.getAllPlayerSessionIds()[0];
+    const player = videoPlayer.getVideoPlayerBySessionId(playerSessionId);
+
+    if (event.data.type === "SET_CURRENT_TIME") {
+      console.log("Trying to set new current time from:" + event.data.currentTime);
+      player.seek(event.data.currentTime);
+      player.pause();
+      console.log("New current time is:" + player.getCurrentTime());
+    }
+
+  });
+}, 0);`.trim();

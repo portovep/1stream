@@ -70,7 +70,7 @@ function syncPlay(video, currentTime) {
   );
 
   isRemotePlay = true;
-  video.currentTime = currentTime;
+  setCurrentTime(currentTime);
   video.play();
 }
 
@@ -83,7 +83,7 @@ function syncPause(video, currentTime) {
   );
 
   isRemotePause = true;
-  video.currentTime = currentTime;
+  setCurrentTime(currentTime);
   video.pause();
 }
 
