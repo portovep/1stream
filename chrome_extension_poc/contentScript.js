@@ -83,16 +83,17 @@ function uuidv4() {
   });
 }
 
-function setCurrentTime(newCurrentTime) {
+function setCurrentTime(newCurrentTimeInSeconds) {
   var url = window.location.href;
   if (url.includes("netflix")) {
     console.log("Setting Netflix Current Time");
+    const newCurrentTimeInMs = Math.floor(newCurrentTimeInSeconds * 1000);
     window.postMessage(
-      { type: "SET_CURRENT_TIME", currentTime: newCurrentTime },
+      { type: "SET_CURRENT_TIME", currentTime: newCurrentTimeInMs },
       "*"
     );
   } else {
-    video.currentTime = newCurrentTime;
+    video.currentTime = newCurrentTimeInSeconds;
   }
 }
 
@@ -133,6 +134,25 @@ function retryUntilFound(query) {
 }
 
 function injectNetflixHandler() {
+  const netflixHandlerScriptContent = `setTimeout(function() {
+    window.addEventListener('message', function(event) {
+      console.log('page javascript got message:', event);
+  
+      const videoPlayer = window.netflix.appContext.state.playerApp.getAPI()
+      .videoPlayer;
+      const playerSessionId = videoPlayer.getAllPlayerSessionIds()[0];
+      const player = videoPlayer.getVideoPlayerBySessionId(playerSessionId);
+  
+      if (event.data.type === "SET_CURRENT_TIME") {
+        console.log("Trying to set new current time (ms): " + event.data.currentTime);
+        player.seek(event.data.currentTime);
+        player.pause();
+        console.log("New current time is (ms): " + player.getCurrentTime());
+      }
+  
+    });
+  }, 0);`.trim();
+
   var s = document.createElement("script");
   s.textContent = netflixHandlerScriptContent;
   (document.head || document.documentElement).appendChild(s);
@@ -140,22 +160,3 @@ function injectNetflixHandler() {
     s.remove();
   };
 }
-
-const netflixHandlerScriptContent = `setTimeout(function() {
-  window.addEventListener('message', function(event) {
-    console.log('page javascript got message:', event);
-
-    const videoPlayer = window.netflix.appContext.state.playerApp.getAPI()
-    .videoPlayer;
-    const playerSessionId = videoPlayer.getAllPlayerSessionIds()[0];
-    const player = videoPlayer.getVideoPlayerBySessionId(playerSessionId);
-
-    if (event.data.type === "SET_CURRENT_TIME") {
-      console.log("Trying to set new current time from:" + event.data.currentTime);
-      player.seek(event.data.currentTime);
-      player.pause();
-      console.log("New current time is:" + player.getCurrentTime());
-    }
-
-  });
-}, 0);`.trim();
