@@ -1,86 +1,42 @@
 console.log("Waiting for START command from extension");
 
 var video;
+var room;
 
 async function startup() {
-  var peer = new Peer();
-  var peerId = await openPeer(peer)
-
-  peer.on('connection', function(conn) { 
-    console.log('Connection received in peer : ' + peerId);
-    bindConnection(conn)
-  });
-
   video = await getVideoElement();
   video.pause();
 
-  console.log("configuring listeners");
-  bindEventListeners(video);
+  room = await Room.create()
+  room.onPlay(syncPlay)
+  room.onPause(syncPause)
+  room.onConnectionOpened(() => {
+    room.sendPauseCommand(video.currentTime)
+  })
 
-  printURLToShare(peerId);
+  bindVideoListeners(video);
 
+  printURLToShare(room.roomId);
   reportStatusToContentScript("STARTED");
 }
 
 async function connect() {
-  const roomName = extractRoomNameFromURL();
-  console.log("Connecting to room name: " + roomName);
-
-  var peer = new Peer();
-  var peerId = await openPeer(peer)
-  console.log("My peer id is " + peerId)
-
-  bindConnection(peer.connect(roomName));
-
   video = await getVideoElement();
   video.pause();
 
-  console.log("configuring listeners");
-  bindEventListeners(video);
-}
+  const roomName = extractRoomNameFromURL();
+  room = await Room.join(roomName)
+  room.onPlay(syncPlay)
+  room.onPause(syncPause)
 
-function openPeer(peer) {
-  return new Promise(function(resolve, reject) {
-    peer.on('open', resolve)
-  });
-}
-
-function logPeerErrors(peer) {
-  peer.on('error', function(err) {
-    console.log("Fatal peer error " + err)
-  });
-}
-
-var connection;
-function bindConnection(conn) {
-  connection = conn
-
-  conn.on('open', function() {
-    console.log('Connection is now opened');
-  
-  });
-
-  conn.on('close', function() {
-    console.log('Connection is now closed');
-  
-  });
-
-  conn.on('error ', function(err) {
-    console.log('Connection error ' + err);
-  
-  });
-
-  // Receive messages
-  conn.on('data', function(data) {
-    handleReceiveMessage(data)
-  });
+  bindVideoListeners(video);
 }
 
 //// BINDINGS AND VIDEO SYNC ////
 var isRemotePlay = false;
 var isRemotePause = false;
 
-function bindEventListeners(video) {
+function bindVideoListeners(video) {
   video.addEventListener("play", (event) => {
     if (isRemotePlay) {
       console.log("Video played from remote command");
@@ -88,11 +44,7 @@ function bindEventListeners(video) {
       return;
     }
 
-    if (connection) {
-      sendPlayCommand(connection, video);
-    } else {
-      console.log("Cannot send play command, connection is not ready yet");
-    }
+    room.sendPlayCommand(video.currentTime)
   });
 
   video.addEventListener("pause", (event) => {
@@ -102,37 +54,11 @@ function bindEventListeners(video) {
       return;
     }
 
-    if (connection) {
-      sendPauseCommand(connection, video);
-    } else {
-      console.log("Cannot send pause command, connection is not ready yet");
-    }
+    room.sendPauseCommand(video.currentTime)
   });
 }
 
-function sendPlayCommand(connection, video) {
-  const currentTime = parseFloat(video.currentTime);
-  console.log("Sending PLAY command, currentTime: " + currentTime);
-  connection.send(
-    JSON.stringify({
-      type: "PLAY",
-      currentTime: currentTime,
-    })
-  );
-}
-
-function sendPauseCommand(connection, video) {
-  const currentTime = parseFloat(video.currentTime);
-  console.log("Sending PAUSE command, currentTime: " + currentTime);
-  connection.send(
-    JSON.stringify({
-      type: "PAUSE",
-      currentTime: currentTime,
-    })
-  );
-}
-
-function syncPlay(video, currentTime) {
+function syncPlay(currentTime) {
   console.log(
     "Play command received, local video time: " +
       video.currentTime +
@@ -145,7 +71,7 @@ function syncPlay(video, currentTime) {
   video.play();
 }
 
-function syncPause(video, currentTime) {
+function syncPause(currentTime) {
   console.log(
     "Pause command received, local video time: " +
       video.currentTime +
@@ -156,19 +82,6 @@ function syncPause(video, currentTime) {
   isRemotePause = true;
   video.currentTime = currentTime;
   video.pause();
-}
-
-// Handles msgs received via the RTCDataChannel
-function handleReceiveMessage(data) {
-  var command = JSON.parse(data);
-
-  if (command.type === "PLAY") {
-    syncPlay(video, command.currentTime);
-  } else if (command.type == "PAUSE") {
-    syncPause(video, command.currentTime);
-  } else if (command.type == "TEXT") {
-    console.log(command.message);
-  }
 }
 
 
@@ -199,10 +112,6 @@ function extractRoomNameFromURL() {
   return roomName;
 }
 
-function generateRoomName() {
-  return uuidv4();
-}
-
 function printURLToShare(roomName) {
   const urlParams = new URL(document.location).searchParams;
   urlParams.append("roomName", roomName);
@@ -215,14 +124,6 @@ function printURLToShare(roomName) {
 
   console.log(sharableURL);
   alert(sharableURL);
-}
-
-function uuidv4() {
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(c) {
-    var r = (Math.random() * 16) | 0,
-      v = c == "x" ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
 }
 
 function setCurrentTime(newCurrentTime) {
