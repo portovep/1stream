@@ -9,7 +9,6 @@
     "tabs",
     "https://*/"
   ],
-  "options_page": "options.html",
   "background": {
     "scripts": ["background.js"],
     "persistent": false
@@ -32,9 +31,9 @@
   "content_scripts": [
     {
       "matches": [
-        "https://www.netflix.com/watch/*",
-        "https://www.primevideo.com/detail/*",
-        "https://www.youtube.com/watch*"
+        "https://www.netflix.com/*",
+        "https://www.primevideo.com/*",
+        "https://www.youtube.com/*"
       ],
       "js": ["lib/peerjs.min.js", "room.js", "contentScript.js"]
     }

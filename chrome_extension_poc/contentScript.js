@@ -7,12 +7,12 @@ async function startup() {
   video = await getVideoElement();
   video.pause();
 
-  room = await Room.create()
-  room.onPlay(syncPlay)
-  room.onPause(syncPause)
+  room = await Room.create();
+  room.onPlay(syncPlay);
+  room.onPause(syncPause);
   room.onConnectionOpened(() => {
-    room.sendPauseCommand(video.currentTime)
-  })
+    room.sendPauseCommand(video.currentTime);
+  });
 
   bindVideoListeners(video);
 
@@ -25,16 +25,16 @@ async function connect() {
   video.pause();
 
   const roomName = extractRoomNameFromURL();
-  room = await Room.join(roomName)
-  room.onPlay(syncPlay)
-  room.onPause(syncPause)
+  room = await Room.join(roomName);
+  room.onPlay(syncPlay);
+  room.onPause(syncPause);
 
   bindVideoListeners(video);
 }
 
 window.onbeforeunload = function() {
   if (room) {
-    room.close()
+    room.close();
   }
 };
 
@@ -50,7 +50,7 @@ function bindVideoListeners(video) {
       return;
     }
 
-    room.sendPlayCommand(video.currentTime)
+    room.sendPlayCommand(video.currentTime);
   });
 
   video.addEventListener("pause", (event) => {
@@ -60,36 +60,35 @@ function bindVideoListeners(video) {
       return;
     }
 
-    room.sendPauseCommand(video.currentTime)
+    room.sendPauseCommand(video.currentTime);
   });
 }
 
 function syncPlay(currentTime) {
   console.log(
-    "Play command received, local video time: " +
+    "Play command received, local video time (seconds): " +
       video.currentTime +
-      ", new time: " +
+      ", new time (seconds): " +
       currentTime
   );
 
   isRemotePlay = true;
-  video.currentTime = currentTime;
+  setCurrentTime(currentTime);
   video.play();
 }
 
 function syncPause(currentTime) {
   console.log(
-    "Pause command received, local video time: " +
+    "Pause command received, local video time (seconds): " +
       video.currentTime +
-      ", new time: " +
+      ", new time (seconds): " +
       currentTime
   );
 
   isRemotePause = true;
-  video.currentTime = currentTime;
+  setCurrentTime(currentTime);
   video.pause();
 }
-
 
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
   console.log("Received command " + request.command + " from extension");
@@ -131,8 +130,6 @@ function printURLToShare(roomName) {
   console.log(sharableURL);
   alert(sharableURL);
 }
-
-
 
 function setCurrentTime(newCurrentTimeInSeconds) {
   var url = window.location.href;
