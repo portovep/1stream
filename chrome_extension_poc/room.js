@@ -24,7 +24,7 @@ class Room {
    */
   static create() {
     return new Promise(function(resolve, reject) {
-      const peer = new Peer();
+      const peer = new Peer(Room.serverOptions);
       peer.on("open", (peerId) => {
         // New room so the new peer ID becomes the roomID
         resolve(new Room(peerId, peer));
@@ -37,7 +37,7 @@ class Room {
    */
   static join(roomId) {
     return new Promise(function(resolve, reject) {
-      const peer = new Peer();
+      const peer = new Peer(Room.serverOptions);
       peer.on("open", (peerId) => {
         const conn = peer.connect(roomId);
         resolve(new Room(roomId, peer, conn));
@@ -133,3 +133,9 @@ class Room {
     });
   }
 }
+
+Room.serverOptions = {
+  host: "bingeparty.pabloporto.me",
+  port: 443,
+  path: "/myapp",
+};
