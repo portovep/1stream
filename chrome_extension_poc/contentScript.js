@@ -32,6 +32,12 @@ async function connect() {
   bindVideoListeners(video);
 }
 
+window.onbeforeunload = function() {
+  if (room) {
+    room.close()
+  }
+};
+
 //// BINDINGS AND VIDEO SYNC ////
 var isRemotePlay = false;
 var isRemotePause = false;
