@@ -36,28 +36,28 @@ chrome.webNavigation.onCompleted.addListener(handleSyncRequest, {
   ],
 });
 
-chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
-  if (changeInfo.url) {
-    let url = changeInfo.url;
-    console.log("Tab %d got new URL: %s", tabId, url);
-    if (
-      url.includes("netflix.com/watch") ||
-      url.includes("youtube.com/watch") ||
-      url.includes("primevideo.com/detail")
-    ) {
-      console.log("Transition to a url with a video");
-      chrome.tabs.executeScript({
-        file: "lib/socket.io.js",
-      });
-      chrome.tabs.executeScript({
-        file: "networking.js",
-      });
-      chrome.tabs.executeScript({
-        file: "contentScript.js",
-      });
-    }
-  }
-});
+// chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
+//   if (changeInfo.url) {
+//     let url = changeInfo.url;
+//     console.log("Tab %d got new URL: %s", tabId, url);
+//     if (
+//       url.includes("netflix.com/watch") ||
+//       url.includes("youtube.com/watch") ||
+//       url.includes("primevideo.com/detail")
+//     ) {
+//       console.log("Transition to a url with a video");
+//       chrome.tabs.executeScript({
+//         file: "lib/socket.io.js",
+//       });
+//       chrome.tabs.executeScript({
+//         file: "lib/peerjs.min.js",
+//       });
+//       chrome.tabs.executeScript({
+//         file: "contentScript.js",
+//       });
+//     }
+//   }
+// });
 
 chrome.pageAction.onClicked.addListener(function(tab) {
   console.log("Page Action on click fired for tab ID: " + tab.id);

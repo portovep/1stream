@@ -1,34 +1,95 @@
 console.log("Waiting for START command from extension");
 
-async function startup() {
-  var roomName = generateRoomName();
-  connectToSignalingServer(roomName);
+var video;
+var room;
 
-  var video = await getVideoElement();
-  setVideo(video);
+async function startup() {
+  video = await getVideoElement();
   video.pause();
 
-  console.log("configuring listeners");
-  bindEventListeners(video);
+  room = await Room.create()
+  room.onPlay(syncPlay)
+  room.onPause(syncPause)
+  room.onConnectionOpened(() => {
+    room.sendPauseCommand(video.currentTime)
+  })
 
-  printURLToShare(roomName);
+  bindVideoListeners(video);
 
+  printURLToShare(room.roomId);
   reportStatusToContentScript("STARTED");
 }
 
 async function connect() {
-  const roomName = extractRoomNameFromURL();
-  console.log("Connecting to room name: " + roomName);
-
-  var video = await getVideoElement();
-  setVideo(video);
+  video = await getVideoElement();
   video.pause();
 
-  console.log("configuring listeners");
-  bindEventListeners(video);
+  const roomName = extractRoomNameFromURL();
+  room = await Room.join(roomName)
+  room.onPlay(syncPlay)
+  room.onPause(syncPause)
 
-  connectToSignalingServer(roomName);
+  bindVideoListeners(video);
 }
+
+window.onbeforeunload = function() {
+  if (room) {
+    room.close()
+  }
+};
+
+//// BINDINGS AND VIDEO SYNC ////
+var isRemotePlay = false;
+var isRemotePause = false;
+
+function bindVideoListeners(video) {
+  video.addEventListener("play", (event) => {
+    if (isRemotePlay) {
+      console.log("Video played from remote command");
+      isRemotePlay = false;
+      return;
+    }
+
+    room.sendPlayCommand(video.currentTime)
+  });
+
+  video.addEventListener("pause", (event) => {
+    if (isRemotePause) {
+      console.log("Video pause from remote command");
+      isRemotePause = false;
+      return;
+    }
+
+    room.sendPauseCommand(video.currentTime)
+  });
+}
+
+function syncPlay(currentTime) {
+  console.log(
+    "Play command received, local video time: " +
+      video.currentTime +
+      ", new time: " +
+      currentTime
+  );
+
+  isRemotePlay = true;
+  video.currentTime = currentTime;
+  video.play();
+}
+
+function syncPause(currentTime) {
+  console.log(
+    "Pause command received, local video time: " +
+      video.currentTime +
+      ", new time: " +
+      currentTime
+  );
+
+  isRemotePause = true;
+  video.currentTime = currentTime;
+  video.pause();
+}
+
 
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
   console.log("Received command " + request.command + " from extension");
@@ -57,10 +118,6 @@ function extractRoomNameFromURL() {
   return roomName;
 }
 
-function generateRoomName() {
-  return uuidv4();
-}
-
 function printURLToShare(roomName) {
   const urlParams = new URL(document.location).searchParams;
   urlParams.append("roomName", roomName);
@@ -75,13 +132,7 @@ function printURLToShare(roomName) {
   alert(sharableURL);
 }
 
-function uuidv4() {
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(c) {
-    var r = (Math.random() * 16) | 0,
-      v = c == "x" ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
-}
+
 
 function setCurrentTime(newCurrentTimeInSeconds) {
   var url = window.location.href;
