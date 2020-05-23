@@ -103,6 +103,13 @@ class Room {
         this.connectionOpenCallback = callback
     }
 
+    close() {
+        if (this.connection) {
+            this.connection.close()
+        }
+        this.peer.destroy()
+    }
+
     _bindConnectionListeners() {
         const conn = this.connection
         conn.on('open', () => {
