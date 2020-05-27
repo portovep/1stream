@@ -35,7 +35,7 @@
         "https://www.primevideo.com/*",
         "https://www.youtube.com/*"
       ],
-      "js": ["lib/peerjs.min.js", "room.js", "contentScript.js"]
+      "js": ["lib/peerjs.min.js", "room.js", "contentScript.js", "videoPlayer.js"]
     }
   ]
 }
