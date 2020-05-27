@@ -8,8 +8,8 @@ async function startup() {
   video.pause();
 
   room = await Room.create();
-  room.onPlay(syncPlay);
-  room.onPause(syncPause);
+  bindRoomListeners(room)
+
   room.onConnectionOpened(() => {
     room.sendPauseCommand(video.currentTime);
   });
@@ -26,27 +26,27 @@ async function connect() {
 
   const roomName = extractRoomNameFromURL();
   room = await Room.join(roomName);
-  room.onPlay(syncPlay);
-  room.onPause(syncPause);
+  bindRoomListeners(room)
 
   bindVideoListeners(video);
 }
 
-window.onbeforeunload = function() {
+window.onbeforeunload = function () {
   if (room) {
     room.close();
   }
 };
 
 //// BINDINGS AND VIDEO SYNC ////
-var isRemotePlay = false;
-var isRemotePause = false;
+var isAutoPlay = false;
+var isAutoPause = false;
+var isAutoSeeked = false;
 
 function bindVideoListeners(video) {
   video.addEventListener("play", (event) => {
-    if (isRemotePlay) {
-      console.log("Video played from remote command");
-      isRemotePlay = false;
+    if (isAutoPlay) {
+      console.log("Ignoring play event - played programmatically");
+      isAutoPlay = false;
       return;
     }
 
@@ -54,43 +54,57 @@ function bindVideoListeners(video) {
   });
 
   video.addEventListener("pause", (event) => {
-    if (isRemotePause) {
-      console.log("Video pause from remote command");
-      isRemotePause = false;
+    if (isAutoPause) {
+      console.log("Ignoring pause event - paused programmatically");
+      isAutoPause = false;
       return;
     }
 
     room.sendPauseCommand(video.currentTime);
   });
+
+  video.addEventListener("seeked", (event) => {
+    if (isAutoSeeked) {
+      console.log("Ignoring seeked event - seeked programmatically");
+      isAutoSeeked = false;
+      return;
+    }
+
+    room.sendSeekedCommand(video.currentTime);
+  });
 }
 
-function syncPlay(currentTime) {
-  console.log(
-    "Play command received, local video time (seconds): " +
-      video.currentTime +
-      ", new time (seconds): " +
-      currentTime
+function bindRoomListeners(room) {
+  room.onPlay((currentTime) => {
+    logCommandReceived("Play", currentTime)
+    setCurrentTime(currentTime);
+    isAutoPlay = true;
+    video.play();
+  });
+
+  room.onPause((currentTime) => {
+    logCommandReceived("Pause", currentTime)
+    isAutoPause = true;
+    video.pause();
+    setCurrentTime(currentTime);
+  });
+
+  room.onSeeked((currentTime) => {
+    logCommandReceived("Seeked", currentTime)
+    setCurrentTime(currentTime);
+  });
+}
+
+function logCommandReceived(commandName, currentTime) {
+  console.log(commandName +
+    " received, local video time (seconds): " +
+    video.currentTime +
+    ", new time (seconds): " +
+    currentTime
   );
-
-  isRemotePlay = true;
-  setCurrentTime(currentTime);
-  video.play();
 }
 
-function syncPause(currentTime) {
-  console.log(
-    "Pause command received, local video time (seconds): " +
-      video.currentTime +
-      ", new time (seconds): " +
-      currentTime
-  );
-
-  isRemotePause = true;
-  setCurrentTime(currentTime);
-  video.pause();
-}
-
-chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   console.log("Received command " + request.command + " from extension");
   if (request.command == "START") {
     console.log("Reporting status STARTING to extension");
@@ -132,6 +146,13 @@ function printURLToShare(roomName) {
 }
 
 function setCurrentTime(newCurrentTimeInSeconds) {
+  const timeDiff = Math.abs(video.currentTime - newCurrentTimeInSeconds)
+  if (timeDiff < 0.5) {
+    console.log("Skipping setCurrentTime, video time diff " + timeDiff);
+    return
+  }
+
+  isAutoSeeked = true
   var url = window.location.href;
   if (url.includes("netflix")) {
     console.log("Setting Netflix Current Time");
@@ -169,7 +190,7 @@ function getVideoElement() {
 
 function retryUntilFound(query) {
   return new Promise((resolve, reject) => {
-    var checkExist = setInterval(function() {
+    var checkExist = setInterval(function () {
       var video = query();
       console.log("Looking for video");
       if (video.currentTime) {
@@ -204,7 +225,7 @@ function injectNetflixHandler() {
   var s = document.createElement("script");
   s.textContent = netflixHandlerScriptContent;
   (document.head || document.documentElement).appendChild(s);
-  s.onload = function() {
+  s.onload = function () {
     s.remove();
   };
 }
