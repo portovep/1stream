@@ -2,114 +2,110 @@
  * Wrapper of HTML5 video element that makes it easier to handle the video element and controll its listeners
  */
 class VideoPlayer {
+  /**
+   * @param {*} video The HTML5 video element
+   * @param {*} hostname e.g. netflix.com
+   */
+  constructor(video, hostname) {
+    this.video = video;
+    this.hostname = hostname;
 
-    /**
-     * @param {*} video The HTML5 video element
-     * @param {*} hostname e.g. netflix.com
-     */
-    constructor(video, hostname) {
-        this.video = video;
-        this.hostname = hostname;
+    this.video.addEventListener("play", (event) => {
+      if (this.isAutoPlay) {
+        console.log("VideoPlayer - played programmatically");
+        this.isAutoPlay = false;
+        return;
+      }
+      if (this.onplay) this.onplay();
+    });
 
-        this.video.addEventListener("play", (event) => {
-            if (this.isAutoPlay) {
-                console.log("VideoPlayer - played programmatically");
-                this.isAutoPlay = false;
-                return;
-            }
-            if (this.onplay) this.onplay();
-        });
+    this.video.addEventListener("pause", (event) => {
+      if (this.isAutoPause) {
+        console.log("VideoPlayer - paused programmatically");
+        this.isAutoPause = false;
+        return;
+      }
 
-        this.video.addEventListener("pause", (event) => {
-            if (this.isAutoPause) {
-                console.log("VideoPlayer - paused programmatically");
-                this.isAutoPause = false;
-                return;
-            }
+      if (this.onpause) this.onpause();
+    });
 
-            if (this.onpause) this.onpause();
-        });
+    this.video.addEventListener("seeked", (event) => {
+      if (this.isAutoSeeked) {
+        console.log("VideoPlayer - seeked programmatically");
+        this.isAutoSeeked = false;
+        return;
+      }
 
-        this.video.addEventListener("seeked", (event) => {
-            if (this.isAutoSeeked) {
-                console.log("VideoPlayer - seeked programmatically");
-                this.isAutoSeeked = false;
-                return;
-            }
+      if (this.onseeked) this.onseeked();
+    });
+  }
 
-            if (this.onseeked) this.onseeked();
-        });
+  get currentTime() {
+    return this.video.currentTime;
+  }
+
+  set currentTime(newCurrentTime) {
+    const timeDiff = Math.abs(this.video.currentTime - newCurrentTime);
+    if (timeDiff < 0.5) {
+      console.log("VideoPlayer - skipping setCurrentTime, diff: " + timeDiff);
+      return;
     }
 
-    get currentTime() {
-        return this.video.currentTime;
+    this.isAutoSeeked = true;
+    if (this.hostname.includes("netflix")) {
+      const newCurrentTimeInMs = Math.floor(newCurrentTime * 1000);
+      window.postMessage(
+        { type: "SET_CURRENT_TIME", currentTime: newCurrentTimeInMs },
+        "*"
+      );
+    } else {
+      this.video.currentTime = newCurrentTime;
     }
+  }
 
-    set currentTime(currentTime) {
-        const timeDiff = Math.abs(this.video.currentTime - currentTime)
-        if (timeDiff < 0.5) {
-            console.log("VideoPlayer - skipping setCurrentTime, diff: " + timeDiff);
-            return
-        }
+  play() {
+    this.isAutoPlay = true;
+    this.video.play();
+  }
 
-        this.isAutoSeeked = true
-        if (this.hostname.includes("netflix")) {
-            const newCurrentTimeInMs = Math.floor(newCurrentTimeInSeconds * 1000);
-            window.postMessage(
-                { type: "SET_CURRENT_TIME", currentTime: newCurrentTimeInMs },
-                "*"
-            );
-        } else {
-            this.video.currentTime = currentTime;
-        }
-    }
+  pause() {
+    this.isAutoPause = true;
+    this.video.pause();
+  }
 
-    play() {
-        this.isAutoPlay = true
-        this.video.play()
-    }
+  onPlay(callback) {
+    this.onplay = callback;
+  }
 
-    pause() {
-        this.isAutoPause = true
-        this.video.pause()
-    }
+  onPause(callback) {
+    this.onpause = callback;
+  }
 
-    onPlay(callback) {
-        this.onplay = callback
-    }
+  onSeeked(callback) {
+    this.onseeked = callback;
+  }
 
-    onPause(callback) {
-        this.onpause = callback
-    }
+  /**
+   * Promise that trieds to locate a video element in the current document and returns a VideoPlayer when one is found.
+   * Additionally it injects a netflix video handler in the current document if the hostname is Netflix.
+   */
+  static locateVideo(document, hostname) {
+    const isNetflix = hostname.includes("netflix");
+    const isYoutube = hostname.includes("youtube");
 
-    onSeeked(callback) {
-        this.onseeked = callback
-    }
+    const findVideoElement = () => {
+      if (isNetflix) {
+        return document.getElementsByTagName("video")[0];
+      } else if (isYoutube) {
+        return document.getElementsByTagName("video")[0];
+      } else {
+        throw "Cannot find a video element for this page";
+      }
+    };
 
-
-    /**
-     * Promise that trieds to locate a video element in the current document and returns a VideoPlayer when one is found.
-     * Additionally it injects a netflix video handler in the current document if the hostname is Netflix. 
-     */
-    static locateVideo(document, hostname) {
-
-        const isNetflix = hostname.includes("netflix")
-        const isYoutube = hostname.includes("youtube")
-
-        const findVideoElement = () => {
-            if (isNetflix) {
-                return document.getElementsByTagName("video")[0];
-            } else if (isYoutube) {
-                return document.getElementsByTagName("video")[0];
-            } else {
-                throw "Cannot find a video element for this page";
-            }
-        }
-
-
-        const injectNetflixHandler = () => {
-            console.log("Injecting Netflix video handler");
-            const netflixHandlerScriptContent = `setTimeout(function() {
+    const injectNetflixHandler = () => {
+      console.log("Injecting Netflix video handler");
+      const netflixHandlerScriptContent = `setTimeout(function() {
             window.addEventListener('message', function(event) {
                 console.log('page javascript got message:', event);
             
@@ -128,29 +124,27 @@ class VideoPlayer {
             });
             }, 0);`.trim();
 
-            var s = document.createElement("script");
-            s.textContent = netflixHandlerScriptContent;
-            (document.head || document.documentElement).appendChild(s);
-            s.onload = function () {
-                s.remove();
-            };
+      var s = document.createElement("script");
+      s.textContent = netflixHandlerScriptContent;
+      (document.head || document.documentElement).appendChild(s);
+      s.onload = function() {
+        s.remove();
+      };
+    };
+
+    return new Promise((resolve, reject) => {
+      var checkExist = setInterval(function() {
+        var video = findVideoElement();
+        console.log("Looking for video");
+        if (video.currentTime) {
+          console.log("Got video: ", video);
+          clearInterval(checkExist);
+          if (isNetflix) {
+            injectNetflixHandler();
+          }
+          resolve(new VideoPlayer(video, hostname));
         }
-
-        return new Promise((resolve, reject) => {
-            var checkExist = setInterval(function () {
-                var video = findVideoElement();
-                console.log("Looking for video");
-                if (video.currentTime) {
-                    console.log("Got video: ", video);
-                    clearInterval(checkExist);
-                    if (isNetflix) {
-                        injectNetflixHandler()
-                    }
-                    resolve(new VideoPlayer(video, hostname));
-                }
-            }, 1000);
-        });
-
-    }
-
+      }, 1000);
+    });
+  }
 }
