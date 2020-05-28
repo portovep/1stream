@@ -23,7 +23,7 @@ class Room {
    * Instantiates a Room by creating a new one. Use room.roomId to access room Id
    */
   static create() {
-    return new Promise(function(resolve, reject) {
+    return new Promise(function (resolve, reject) {
       const peer = new Peer(Room.serverOptions);
       peer.on("open", (peerId) => {
         // New room so the new peer ID becomes the roomID
@@ -36,7 +36,7 @@ class Room {
    * Instantiates a Room by joining one given an existing roomId
    */
   static join(roomId) {
-    return new Promise(function(resolve, reject) {
+    return new Promise(function (resolve, reject) {
       const peer = new Peer(Room.serverOptions);
       peer.on("open", (peerId) => {
         const conn = peer.connect(roomId);
@@ -77,16 +77,36 @@ class Room {
     );
   }
 
+  sendSeekedCommand(videoTime) {
+    if (!this.connection) {
+      console.log("Cannot send seeked command, there isn't a connection");
+      return;
+    }
+
+    const currentTime = parseFloat(videoTime);
+    console.log("Sending SEEKED command, currentTime: " + currentTime);
+    this.connection.send(
+      JSON.stringify({
+        type: "SEEKED",
+        currentTime: currentTime,
+      })
+    );
+  }
+
   onPlay(callback) {
-    this.playCallback = callback;
+    this.onplay = callback;
   }
 
   onPause(callback) {
-    this.pauseCallback = callback;
+    this.onpause = callback;
+  }
+
+  onSeeked(callback) {
+    this.onseeked = callback;
   }
 
   onConnectionOpened(callback) {
-    this.connectionOpenCallback = callback;
+    this.onconnectionopened = callback;
   }
 
   close() {
@@ -100,8 +120,8 @@ class Room {
     const conn = this.connection;
     conn.on("open", () => {
       console.log("Connection is now opened");
-      if (this.connectionOpenCallback) {
-        this.connectionOpenCallback();
+      if (this.onconnectionopened) {
+        this.onconnectionopened();
       }
     });
 
@@ -116,19 +136,26 @@ class Room {
     // Receive messages
     conn.on("data", (data) => {
       var command = JSON.parse(data);
+     // console.log("Command received " + data);
 
-      if (command.type === "PLAY") {
-        console.log("Play received " + command.currentTime);
-        if (this.playCallback) {
-          this.playCallback(command.currentTime);
-        }
-      } else if (command.type == "PAUSE") {
-        console.log("Pause received " + command.currentTime);
-        if (this.pauseCallback) {
-          this.pauseCallback(command.currentTime);
-        }
-      } else {
-        throw "Unknow command type";
+      switch (command.type) {
+        case "PLAY":
+          if (this.onplay) {
+            this.onplay(command.currentTime);
+          }
+          break;
+        case "PAUSE":
+          if (this.onpause) {
+            this.onpause(command.currentTime);
+          }
+          break;
+        case "SEEKED":
+          if (this.onseeked) {
+            this.onseeked(command.currentTime);
+          }
+          break;
+        default:
+          throw "Unknow command type " + command.type;
       }
     });
   }
