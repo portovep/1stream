@@ -1,9 +1,12 @@
 console.log("Waiting for START command from extension");
+var view = View.initializeUI(document, window);
 
 var video;
 var room;
 
 async function startup() {
+  view.showNotification("Extension initialized");
+
   video = await getVideoElement();
   video.pause();
 
@@ -12,6 +15,8 @@ async function startup() {
   room.onPause(syncPause);
   room.onConnectionOpened(() => {
     room.sendPauseCommand(video.currentTime);
+    view.hideShowShareModel();
+    view.showNotification("Your friend has joined you!");
   });
 
   bindVideoListeners(video);
@@ -28,6 +33,7 @@ async function connect() {
   room = await Room.join(roomName);
   room.onPlay(syncPlay);
   room.onPause(syncPause);
+  view.showNotification("You joined your friend");
 
   bindVideoListeners(video);
 }
@@ -128,7 +134,7 @@ function printURLToShare(roomName) {
     urlParams.toString();
 
   console.log(sharableURL);
-  alert(sharableURL);
+  view.showShareModal(sharableURL);
 }
 
 function setCurrentTime(newCurrentTimeInSeconds) {

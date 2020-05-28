@@ -9,6 +9,7 @@
     "tabs",
     "https://*/"
   ],
+  "web_accessible_resources": ["lib/css/*.css"],
   "background": {
     "scripts": ["background.js"],
     "persistent": false
@@ -35,7 +36,14 @@
         "https://www.primevideo.com/*",
         "https://www.youtube.com/*"
       ],
-      "js": ["lib/peerjs.min.js", "room.js", "contentScript.js"]
+      "js": [
+        "lib/peerjs.min.js",
+        "lib/materialize.min.js",
+        "room.js",
+        "view.js",
+        "contentScript.js"
+      ],
+      "css": ["lib/css/main.css"]
     }
   ]
 }
