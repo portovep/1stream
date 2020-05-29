@@ -5,23 +5,25 @@ var video;
 var room;
 
 async function startup() {
-  view.showNotification("Extension initialized");
+  if (!video) {
+    video = await VideoPlayer.locateVideo(document, window.location.hostname);
+    video.pause();
+  }
 
-  video = await VideoPlayer.locateVideo(document, window.location.hostname);
-  video.pause();
+  if (room && !room.closed) {
+    if (room.connectionOpen) {
+      view.showNotification("You're watching together, video is linked 👍");
+    } else {
+      printURLToShare(room.roomId);
+    }
+    return;
+  }
 
   room = await Room.create();
+  bindVideoPlayerToRoom(video, room);
 
-  room.onConnectionOpened(() => {
-    room.sendPauseCommand(video.currentTime);
-    view.hideShowShareModel();
-    view.showNotification("Your friend has joined you!");
-  });
-
-  bindVideoPlayerToRoom(video, room)
-
-  printURLToShare(room.roomId);
   reportStatusToContentScript("STARTED");
+  printURLToShare(room.roomId);
 }
 
 async function connect() {
@@ -30,17 +32,27 @@ async function connect() {
 
   const roomName = extractRoomNameFromURL();
   room = await Room.join(roomName);
-  
-  view.showNotification("You joined your friend");
 
   bindVideoPlayerToRoom(video, room)
 }
 
+function onUrlChanged(newUrl) {
+  // TODO in the future handle transitions across videos
+  // on the same site without closign the existing connection
+  console.log("Page changed - closing room if open")
+  video = null;
+  if (room) {
+    room.close();
+  }
+}
+
 window.onbeforeunload = function () {
+  console.log("Page unloading - closing room if open")
   if (room) {
     room.close();
   }
 };
+
 
 function bindVideoPlayerToRoom(video, room) {
   // Video listeners
@@ -73,6 +85,23 @@ function bindVideoPlayerToRoom(video, room) {
     logCommandReceived("Seeked", currentTime)
     video.currentTime = currentTime
   });
+
+  room.onConnectionClosed(() => {
+    video.pause();
+    view.showNotification("Connection finished");
+  });
+
+  room.onConnectionOpened(() => {
+    if (room.isCreator) {
+      video.pause();
+      room.sendPauseCommand(video.currentTime);
+      view.hideShowShareModel()
+      view.showNotification("Your friend has joined, ready to start 👍");
+    } else {
+      view.showNotification("You've joined, video is linked 👍");
+    }
+  });
+
 }
 
 function logCommandReceived(commandName, currentTime) {
@@ -94,6 +123,8 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     console.log("Reporting status CONNECTING to extension");
     sendResponse({ status: "CONNECTING" });
     connect();
+  } else if (request.command == "URL_CHANGED") {
+    onUrlChanged(request.newUrl)
   }
 });
 
@@ -113,7 +144,7 @@ function extractRoomNameFromURL() {
 
 function printURLToShare(roomName) {
   const urlParams = new URL(document.location).searchParams;
-  urlParams.append("roomName", roomName);
+  urlParams.set("roomName", roomName);
 
   const sharableURL =
     document.location.origin +
