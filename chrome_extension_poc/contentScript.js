@@ -4,19 +4,30 @@ var video;
 var room;
 
 async function startup() {
-  video = await VideoPlayer.locateVideo(document, window.location.hostname);
-  video.pause();
+  if (!video) {
+    video = await VideoPlayer.locateVideo(document, window.location.hostname);
+    video.pause();
+  }
+
+  if (room && !room.closed) {
+    if (room.isCreator) {
+      console.log("Trying to startup but there is already a valid created room")
+      printURLToShare(room.roomId);
+    } else {
+      console.log("Trying to startup but you are already connected to room: " + room.roomId)
+    }
+    return;
+  }
 
   room = await Room.create();
-
   room.onConnectionOpened(() => {
     room.sendPauseCommand(video.currentTime);
   });
 
-  bindVideoPlayerToRoom(video, room)
+  bindVideoPlayerToRoom(video, room);
 
-  printURLToShare(room.roomId);
   reportStatusToContentScript("STARTED");
+  printURLToShare(room.roomId);
 }
 
 async function connect() {
@@ -106,7 +117,7 @@ function extractRoomNameFromURL() {
 
 function printURLToShare(roomName) {
   const urlParams = new URL(document.location).searchParams;
-  urlParams.append("roomName", roomName);
+  urlParams.set("roomName", roomName);
 
   const sharableURL =
     document.location.origin +

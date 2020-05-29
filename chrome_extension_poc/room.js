@@ -3,20 +3,36 @@ class Room {
     this.roomId = roomId;
     this.connection = connection;
     this.peer = peer;
+    // Whether the room has been initiated by calling Room.create() or by joining an existing roomId
+    this.isCreator = connection == null;
 
     this.peer.on("error", (err) => {
-      console.log("Fatal peer error " + err);
+      console.log("Fatal peer error " + err + "\nPeer will be destroyed.");
+      // This error is usually fatal so ensure we destroy the peer to mark the room as closed. 
+      this.peer.destroy();
+    });
+
+    this.peer.on('disconnected', () => {
+      console.log("Peer disconnected - it may reconnect");
+      this.peer.reconnect();
     });
 
     if (this.connection) {
       this._bindConnectionListeners();
-    } else {
-      peer.on("connection", (conn) => {
-        console.log("Connection received");
+      return;
+    }
+
+    peer.on("connection", (conn) => {
+      if (this.connection && this.connection.open) {
+        // So far we only support 1 to 1 connections, if a second peer tries to connect we reject it for now to avoid issues. 
+        console.log("New connection received but there's already one opened. Rejecting new one.");
+        conn.close();
+      } else {
+        console.log("New connection received");
         this.connection = conn;
         this._bindConnectionListeners();
-      });
-    }
+      }
+    });
   }
 
   /**
@@ -45,9 +61,21 @@ class Room {
     });
   }
 
+  /**
+   * If the room is closed, it cannot be used again and a new room needs to be created. 
+   * This can happen after calling room.close() or because there was a fatal issue in the underlying peer.  
+   */
+  get closed() {
+    return this.peer.destroyed;
+  }
+
+  get connectionOpen() {
+    return this.connection != null && this.connection.open
+  }
+
   sendPlayCommand(videoTime) {
-    if (!this.connection) {
-      console.log("Cannot send play command, there isn't a connection");
+    if (!this.connectionOpen) {
+      console.log("Cannot send play command, there isn't an open connection");
       return;
     }
 
@@ -62,8 +90,8 @@ class Room {
   }
 
   sendPauseCommand(videoTime) {
-    if (!this.connection) {
-      console.log("Cannot send pause command, there isn't a connection");
+    if (!this.connectionOpen) {
+      console.log("Cannot send pause command, there isn't an open connection");
       return;
     }
 
@@ -78,8 +106,8 @@ class Room {
   }
 
   sendSeekedCommand(videoTime) {
-    if (!this.connection) {
-      console.log("Cannot send seeked command, there isn't a connection");
+    if (!this.connectionOpen) {
+      console.log("Cannot send seeked command, there isn't an open connection");
       return;
     }
 
@@ -127,6 +155,12 @@ class Room {
 
     conn.on("close", () => {
       console.log("Connection is now closed");
+      this.connection = null;
+      // If the connection is closed and we're not the creator, cleanup the current room.
+      if (!this.isCreator) {
+        console.log("Closing room - it's no longer useful after disconnecting from the creator that sent us the link");
+        this.close();
+      }
     });
 
     conn.on("error ", (err) => {
@@ -136,7 +170,7 @@ class Room {
     // Receive messages
     conn.on("data", (data) => {
       var command = JSON.parse(data);
-     // console.log("Command received " + data);
+      // console.log("Command received " + data);
 
       switch (command.type) {
         case "PLAY":
