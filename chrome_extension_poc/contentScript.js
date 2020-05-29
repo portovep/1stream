@@ -1,9 +1,12 @@
 console.log("Waiting for START command from extension");
+var view = View.initializeUI(document, window);
 
 var video;
 var room;
 
 async function startup() {
+  view.showNotification("Extension initialized");
+  
   if (!video) {
     video = await VideoPlayer.locateVideo(document, window.location.hostname);
     video.pause();
@@ -32,6 +35,9 @@ async function connect() {
 
   const roomName = extractRoomNameFromURL();
   room = await Room.join(roomName);
+  
+  view.showNotification("You joined your friend");
+
   bindVideoPlayerToRoom(video, room)
 }
 
@@ -146,5 +152,5 @@ function printURLToShare(roomName) {
     urlParams.toString();
 
   console.log(sharableURL);
-  alert(sharableURL);
+  view.showShareModal(sharableURL);
 }
