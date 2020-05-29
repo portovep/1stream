@@ -1,5 +1,5 @@
-chrome.runtime.onInstalled.addListener(function() {
-  chrome.declarativeContent.onPageChanged.removeRules(undefined, function() {
+chrome.runtime.onInstalled.addListener(function () {
+  chrome.declarativeContent.onPageChanged.removeRules(undefined, function () {
     chrome.declarativeContent.onPageChanged.addRules([
       {
         conditions: [
@@ -37,7 +37,7 @@ chrome.webNavigation.onCompleted.addListener(handleSyncRequest, {
 });
 
 function handleSyncRequest(event) {
-  chrome.tabs.sendMessage(event.tabId, { command: "CONNECT" }, function(
+  chrome.tabs.sendMessage(event.tabId, { command: "CONNECT" }, function (
     response
   ) {
     console.log(
@@ -46,26 +46,35 @@ function handleSyncRequest(event) {
   });
 }
 
-chrome.pageAction.onClicked.addListener(function(tab) {
+chrome.pageAction.onClicked.addListener(function (tab) {
   console.log("Page Action on click fired for tab ID: " + tab.id);
   console.log("and URL: " + tab.url);
 
   console.log("Sending start command to tab ID: " + tab.id);
 
-  chrome.tabs.sendMessage(tab.id, { command: "START" }, function(response) {
+  chrome.tabs.sendMessage(tab.id, { command: "START" }, function (response) {
     console.log(
       "Tab with ID " + tab.id + " responded with status: " + response.status
     );
   });
 });
 
-chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   if (request.status) {
     console.log(
       "Tab with ID " +
-        sender.tab.id +
-        " responded with status: " +
-        request.status
+      sender.tab.id +
+      " responded with status: " +
+      request.status
     );
+  }
+});
+
+chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
+  if (changeInfo.url) {
+    chrome.tabs.sendMessage(tabId, {
+      command: 'URL_CHANGED',
+      newUrl: changeInfo.url
+    })
   }
 });

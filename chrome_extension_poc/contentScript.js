@@ -35,11 +35,23 @@ async function connect() {
   bindVideoPlayerToRoom(video, room)
 }
 
+function onUrlChanged(newUrl) {
+  // TODO in the future handle transitions across videos
+  // on the same site without closign the existing connection
+  console.log("Page changed - closing room if open")
+  video = null;
+  if (room) {
+    room.close();
+  }
+}
+
 window.onbeforeunload = function () {
+  console.log("Page unloading - closing room if open")
   if (room) {
     room.close();
   }
 };
+
 
 function bindVideoPlayerToRoom(video, room) {
   // Video listeners
@@ -104,6 +116,8 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     console.log("Reporting status CONNECTING to extension");
     sendResponse({ status: "CONNECTING" });
     connect();
+  } else if (request.command == "URL_CHANGED") {
+    onUrlChanged(request.newUrl)
   }
 });
 
