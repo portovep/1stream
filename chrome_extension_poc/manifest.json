@@ -41,7 +41,8 @@
         "lib/materialize.min.js",
         "room.js",
         "view.js",
-        "contentScript.js"
+        "contentScript.js",
+        "videoPlayer.js"
       ],
       "css": ["lib/css/main.css"]
     }
