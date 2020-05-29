@@ -5,8 +5,6 @@ var video;
 var room;
 
 async function startup() {
-  view.showNotification("Extension initialized");
-  
   if (!video) {
     video = await VideoPlayer.locateVideo(document, window.location.hostname);
     video.pause();
@@ -35,8 +33,6 @@ async function connect() {
 
   const roomName = extractRoomNameFromURL();
   room = await Room.join(roomName);
-  
-  view.showNotification("You joined your friend");
 
   bindVideoPlayerToRoom(video, room)
 }
@@ -93,14 +89,20 @@ function bindVideoPlayerToRoom(video, room) {
 
   room.onConnectionClosed(() => {
     video.pause();
+    view.showNotification("Connection finished");
   });
 
-  if (room.isCreator) {
-    room.onConnectionOpened(() => {
+  room.onConnectionOpened(() => {
+    if (room.isCreator) {
       video.pause();
       room.sendPauseCommand(video.currentTime);
-    });
-  }
+      view.hideShowShareModel()
+      view.showNotification("Your friend has joined, click play to start!");
+    } else {
+      view.showNotification("You have joined, video is linked");
+    }
+  });
+
 }
 
 function logCommandReceived(commandName, currentTime) {
