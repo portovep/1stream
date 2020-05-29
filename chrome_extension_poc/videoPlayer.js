@@ -69,6 +69,8 @@ class VideoPlayer {
   }
 
   pause() {
+    if (this.video.paused) return;
+
     this.isAutoPause = true;
     this.video.pause();
   }
@@ -127,13 +129,13 @@ class VideoPlayer {
       var s = document.createElement("script");
       s.textContent = netflixHandlerScriptContent;
       (document.head || document.documentElement).appendChild(s);
-      s.onload = function() {
+      s.onload = function () {
         s.remove();
       };
     };
 
     return new Promise((resolve, reject) => {
-      var checkExist = setInterval(function() {
+      var checkExist = setInterval(function () {
         var video = findVideoElement();
         console.log("Looking for video");
         if (video.currentTime) {
