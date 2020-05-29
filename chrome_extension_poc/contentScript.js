@@ -11,11 +11,10 @@ async function startup() {
   }
 
   if (room && !room.closed) {
-    if (room.isCreator) {
-      console.log("Trying to startup but there is already a valid created room")
-      printURLToShare(room.roomId);
+    if (room.connectionOpen) {
+      view.showNotification("You're watching together, video is linked 👍");
     } else {
-      console.log("Trying to startup but you are already connected to room: " + room.roomId)
+      printURLToShare(room.roomId);
     }
     return;
   }
@@ -97,9 +96,9 @@ function bindVideoPlayerToRoom(video, room) {
       video.pause();
       room.sendPauseCommand(video.currentTime);
       view.hideShowShareModel()
-      view.showNotification("Your friend has joined, click play to start!");
+      view.showNotification("Your friend has joined, ready to start 👍");
     } else {
-      view.showNotification("You have joined, video is linked");
+      view.showNotification("You've joined, video is linked 👍");
     }
   });
 
