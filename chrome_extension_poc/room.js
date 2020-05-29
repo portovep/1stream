@@ -96,7 +96,7 @@ class Room {
     }
 
     const currentTime = parseFloat(videoTime);
-    console.log("Sending PAUSE command, currentTime: " + currentTime);
+    console.log("Sending PAUSE command, currentTime: "   + currentTime);
     this.connection.send(
       JSON.stringify({
         type: "PAUSE",
@@ -137,6 +137,10 @@ class Room {
     this.onconnectionopened = callback;
   }
 
+  onConnectionClosed(callback) {
+    this.onconnectionclosed = callback;
+  }
+
   close() {
     if (this.connection) {
       this.connection.close();
@@ -160,6 +164,9 @@ class Room {
       if (!this.isCreator) {
         console.log("Closing room - it's no longer useful after disconnecting from the creator that sent us the link");
         this.close();
+      }
+      if (this.onconnectionclosed) {
+        this.onconnectionclosed();
       }
     });
 

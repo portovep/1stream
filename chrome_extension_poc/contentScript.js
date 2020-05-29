@@ -20,10 +20,6 @@ async function startup() {
   }
 
   room = await Room.create();
-  room.onConnectionOpened(() => {
-    room.sendPauseCommand(video.currentTime);
-  });
-
   bindVideoPlayerToRoom(video, room);
 
   reportStatusToContentScript("STARTED");
@@ -36,7 +32,6 @@ async function connect() {
 
   const roomName = extractRoomNameFromURL();
   room = await Room.join(roomName);
-
   bindVideoPlayerToRoom(video, room)
 }
 
@@ -77,6 +72,17 @@ function bindVideoPlayerToRoom(video, room) {
     logCommandReceived("Seeked", currentTime)
     video.currentTime = currentTime
   });
+
+  room.onConnectionClosed(() => {
+    video.pause();
+  });
+
+  if (room.isCreator) {
+    room.onConnectionOpened(() => {
+      video.pause();
+      room.sendPauseCommand(video.currentTime);
+    });
+  }
 }
 
 function logCommandReceived(commandName, currentTime) {
