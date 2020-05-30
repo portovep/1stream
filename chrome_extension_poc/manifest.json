@@ -9,9 +9,10 @@
     "tabs",
     "https://*/"
   ],
+  "content_security_policy": "script-src 'self' https://cdn4.mxpnl.com/libs/mixpanel-2-latest.min.js; object-src 'self'",
   "web_accessible_resources": ["lib/css/*.css"],
   "background": {
-    "scripts": ["background.js"],
+    "scripts": [ "lib/mixpanel.js", "background.js"],
     "persistent": false
   },
   "page_action": {
