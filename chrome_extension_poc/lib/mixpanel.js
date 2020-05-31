@@ -61,5 +61,5 @@
 
 mixpanel.init("8837ba14beadcb2ffbf6988ee1aefb91", {
     api_host: "https://api.mixpanel.com",
-    batch_requests: false
+    batch_requests: true
 })
