@@ -62,3 +62,7 @@
 .share-button > a {
   padding-left: 5px;
 }
+
+.spinner-container {
+  padding: 45px 0px;
+}

@@ -9,21 +9,24 @@ var room;
 async function startup() {
   trackEvent("startup.click");
 
-  if (!video) {
-    video = await VideoPlayer.locateVideo(document, window.location.hostname);
-    video.pause();
-  }
-
   if (room && !room.closed) {
     if (room.connectionOpen) {
       view.showNotification("You're watching together, video is linked 👍");
     } else {
+      view.showShareModal();
       printURLToShare(room.roomId);
     }
     return;
   }
 
-  trackEvent("room.creating")
+  view.showShareModal();
+
+  if (!video) {
+    video = await VideoPlayer.locateVideo(document, window.location.hostname);
+    video.pause();
+  }
+
+  trackEvent("room.creating");
   room = await Room.create();
   bindVideoPlayerToRoom(video, room);
 
@@ -41,14 +44,14 @@ async function connect() {
 
   room = await Room.join(roomName);
 
-  bindVideoPlayerToRoom(video, room)
+  bindVideoPlayerToRoom(video, room);
   trackEvent("room.joined");
 }
 
 function onUrlChanged(newUrl) {
   // TODO in the future handle transitions across videos
   // on the same site without closign the existing connection
-  console.log("Page changed - closing room if open")
+  console.log("Page changed - closing room if open");
   video = null;
   if (room) {
     trackEvent("room.closing", { reason: "url_change" });
@@ -63,7 +66,6 @@ window.onbeforeunload = () => {
     room.close();
   }
 };
-
 
 function bindVideoPlayerToRoom(video, room) {
   // Video listeners
@@ -84,26 +86,35 @@ function bindVideoPlayerToRoom(video, room) {
 
   // Room listeners
   room.onPlay((currentTime) => {
-    logCommandReceived("Play", currentTime)
-    trackEvent("play.received", { oldTime: video.currentTime, newTime: currentTime });
+    logCommandReceived("Play", currentTime);
+    trackEvent("play.received", {
+      oldTime: video.currentTime,
+      newTime: currentTime,
+    });
 
-    video.currentTime = currentTime
+    video.currentTime = currentTime;
     video.play();
   });
 
   room.onPause((currentTime) => {
-    logCommandReceived("Pause", currentTime)
-    trackEvent("pause.received", { oldTime: video.currentTime, newTime: currentTime });
+    logCommandReceived("Pause", currentTime);
+    trackEvent("pause.received", {
+      oldTime: video.currentTime,
+      newTime: currentTime,
+    });
 
     video.pause();
-    video.currentTime = currentTime
+    video.currentTime = currentTime;
   });
 
   room.onSeeked((currentTime) => {
-    logCommandReceived("Seeked", currentTime)
-    trackEvent("seeked.received", { oldTime: video.currentTime, newTime: currentTime });
+    logCommandReceived("Seeked", currentTime);
+    trackEvent("seeked.received", {
+      oldTime: video.currentTime,
+      newTime: currentTime,
+    });
 
-    video.currentTime = currentTime
+    video.currentTime = currentTime;
   });
 
   room.onConnectionClosed(() => {
@@ -116,7 +127,7 @@ function bindVideoPlayerToRoom(video, room) {
     if (room.isCreator) {
       video.pause();
       room.sendPauseCommand(video.currentTime);
-      view.hideShowShareModel()
+      view.hideShowShareModel();
       view.showNotification("Your friend has joined, ready to start 👍");
     } else {
       view.showNotification("You've joined, video is linked 👍");
@@ -135,15 +146,16 @@ function bindVideoPlayerToRoom(video, room) {
 }
 
 function logCommandReceived(commandName, currentTime) {
-  console.log(commandName +
-    " received, local video time (seconds): " +
-    video.currentTime +
-    ", new time (seconds): " +
-    currentTime
+  console.log(
+    commandName +
+      " received, local video time (seconds): " +
+      video.currentTime +
+      ", new time (seconds): " +
+      currentTime
   );
 }
 
-chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
   console.log("Received command " + request.command + " from extension");
   if (request.command == "START") {
     console.log("Reporting status STARTING to extension");
@@ -154,19 +166,21 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     sendResponse({ status: "CONNECTING" });
     connect();
   } else if (request.command == "URL_CHANGED") {
-    onUrlChanged(request.newUrl)
+    onUrlChanged(request.newUrl);
   }
 });
 
 function trackEvent(event, eventParams) {
   const globalParams = {
     url: window.location.href,
-    roomId: (room && !room.closed) ? room.roomId : null,
-    roomConnected: (room) ? room.connectionOpen : null,
-    hasVideo: (video) ? true : false,
-    isCreator: (room) ? room.isCreator : null,
-  }
-  const params = (eventParams) ? Object.assign(eventParams, globalParams) : globalParams
+    roomId: room && !room.closed ? room.roomId : null,
+    roomConnected: room ? room.connectionOpen : null,
+    hasVideo: video ? true : false,
+    isCreator: room ? room.isCreator : null,
+  };
+  const params = eventParams
+    ? Object.assign(eventParams, globalParams)
+    : globalParams;
   chrome.runtime.sendMessage({ event, params });
 }
 
@@ -190,5 +204,5 @@ function printURLToShare(roomName) {
     urlParams.toString();
 
   console.log(sharableURL);
-  view.showShareModal(sharableURL);
+  view.showSharableURL(sharableURL);
 }
