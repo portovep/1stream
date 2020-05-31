@@ -60,13 +60,8 @@ chrome.pageAction.onClicked.addListener(function (tab) {
 });
 
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-  if (request.status) {
-    console.log(
-      "Tab with ID " +
-      sender.tab.id +
-      " responded with status: " +
-      request.status
-    );
+  if (request.event) {
+    mixpanel.track(request.event, request.params);
   }
 });
 

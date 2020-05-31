@@ -7,14 +7,15 @@ class Room {
     this.isCreator = connection == null;
 
     this.peer.on("error", (err) => {
+      if (this.onpeererror) this.onpeererror(err)
       console.log("Fatal peer error " + err + "\nPeer will be destroyed.");
       // This error is usually fatal so ensure we destroy the peer to mark the room as closed. 
       this.peer.destroy();
     });
 
     this.peer.on('disconnected', () => {
-      console.log("Peer disconnected - it may reconnect");
-      this.peer.reconnect();
+      if (this.onpeerdisconnected) this.onpeerdisconnected()
+      console.log("Peer disconnected");
     });
 
     if (this.connection) {
@@ -96,7 +97,7 @@ class Room {
     }
 
     const currentTime = parseFloat(videoTime);
-    console.log("Sending PAUSE command, currentTime: "   + currentTime);
+    console.log("Sending PAUSE command, currentTime: " + currentTime);
     this.connection.send(
       JSON.stringify({
         type: "PAUSE",
@@ -139,6 +140,14 @@ class Room {
 
   onConnectionClosed(callback) {
     this.onconnectionclosed = callback;
+  }
+
+  onPeerError(callback) {
+    this.onpeererror = callback;
+  }
+
+  onPeerDisconnected(callback) {
+    this.onpeerdisconnected = callback;
   }
 
   close() {
