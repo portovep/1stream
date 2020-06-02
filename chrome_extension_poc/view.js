@@ -107,16 +107,11 @@ class View {
   }
 
   _showWaitingForFriend() {
-    const shareMessageContainer = this.shadowContainer.querySelectorAll(
-      ".share-message-container"
-    )[0];
     const shareTitle = this.shadowContainer.querySelectorAll(".share-title")[0];
 
     shareTitle.innerHTML = `
       <h3>Waiting for your friend....</h3>
     `;
-
-    shareMessageContainer.innerHTML = this._spinnerContent;
   }
 
   _applyStyles() {
