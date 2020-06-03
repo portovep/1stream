@@ -12,6 +12,21 @@ class View {
     this.container = extensionContainer;
 
     this._applyStyles();
+
+    this._spinnerContent = `
+      <div class="center-align  spinner-container">
+        <div class="preloader-wrapper big active">
+        <div class="spinner-layer spinner-blue-only">
+          <div class="circle-clipper left">
+            <div class="circle"></div>
+          </div><div class="gap-patch">
+            <div class="circle"></div>
+          </div><div class="circle-clipper right">
+            <div class="circle"></div>
+          </div>
+        </div>
+      </div>
+    `;
   }
 
   static initializeUI(document, window) {
@@ -23,41 +38,6 @@ class View {
     return new View(document, window, shadowRoot);
   }
 
-  hideShowShareModel() {
-    var elems = this.shadowContainer.querySelectorAll(".modal");
-    var instances = M.Modal.init(elems);
-    instances[0].close();
-  }
-
-  showShareModal(sharableURL) {
-    this.container.innerHTML = `
-      <!-- Modal Structure -->
-      <div id="modal-share" class="modal">
-        <div class="modal-content">
-          <div class="share-title">
-            <h3>Add others</h3>
-          </div>
-          <div class="divider"></div>
-          <div class="share-text">Share this info with people you want to watch remotely</div>
-          <div class="share-url">${sharableURL}</div>
-          <div class="share-button">
-            <a id="share-button" class="waves-effect waves-teal btn-flat btn-large"><i class="material-icons">content_copy</i>
-              Copy joining info
-            </a>
-          </div>
-        </div>
-      </div>  
-    `;
-
-    this.shadowContainer
-      .getElementById("share-button")
-      .addEventListener("click", this._copyShareableURL.bind(this));
-
-    var elems = this.shadowContainer.querySelectorAll(".modal");
-    var instances = M.Modal.init(elems);
-    instances[0].open();
-  }
-
   showNotification(message) {
     const toastContent = `
         <i class="medium material-icons">face</i>
@@ -67,6 +47,71 @@ class View {
       html: toastContent,
       classes: "rounded",
     });
+  }
+
+  showShareModal() {
+    this.container.innerHTML = `
+      <!-- Modal Structure -->
+      <div id="modal-share" class="modal">
+        <div class="modal-content">
+        <div class="share-title">
+          <h3>Add others</h3>
+        </div>
+        <div class="divider"></div>
+        ${this._spinnerContent}
+      </div>
+        </div>  
+      </div>  
+    `;
+
+    var elems = this.shadowContainer.querySelectorAll(".modal");
+    var instances = M.Modal.init(elems);
+    instances[0].open();
+  }
+
+  hideShowShareModel() {
+    var elems = this.shadowContainer.querySelectorAll(".modal");
+    var instances = M.Modal.init(elems);
+    instances[0].close();
+  }
+
+  showSharableURL(sharableURL) {
+    const modalContent = this.shadowContainer.querySelectorAll(
+      ".modal-content"
+    )[0];
+
+    modalContent.innerHTML = `
+      <div class="share-title">
+        <h3>Add others</h3>
+      </div>
+      <div class="divider"></div>
+      <div class="share-message-container">
+        <div class="share-text">Share this info with people you want to watch remotely</div>
+      </div>
+      <div class="share-url">${sharableURL}</div>
+      <div class="share-button">
+        <a id="share-button" class="waves-effect waves-teal btn-flat btn-large"><i class="material-icons">content_copy</i>
+          Copy joining info
+        </a>
+      </div>
+    `;
+
+    this.shadowContainer
+      .getElementById("share-button")
+      .addEventListener("click", this._copyShareableURL.bind(this));
+  }
+
+  _onURLCopied() {
+    this.showNotification("URL copied to the clipboard 👍");
+    this._showWaitingForFriend();
+  }
+
+  _showWaitingForFriend() {
+    const shareTitle = this.shadowContainer.querySelectorAll(".share-title")[0];
+
+    shareTitle.innerHTML = `
+      <h3>Waiting for your friend....</h3>
+    `;
   }
 
   _applyStyles() {
@@ -95,6 +140,8 @@ class View {
       var successful = this.document.execCommand("copy");
       var msg = successful ? "successful" : "unsuccessful";
       console.log("Copy shareable URL command was " + msg);
+
+      this._onURLCopied();
     } catch (err) {
       console.log("Oops, unable to copy");
     }
