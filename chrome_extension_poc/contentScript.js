@@ -11,6 +11,11 @@ try {
   trackError(error);
 }
 
+if (isShareableURL()) {
+  console.log("Shareable URL detected, trying to connect to remote");
+  connect();
+}
+
 async function startup() {
   try {
     trackEvent("startup.click");
@@ -234,4 +239,9 @@ function printURLToShare(roomName) {
 
   console.log(sharableURL);
   view.showSharableURL(sharableURL);
+}
+
+function isShareableURL() {
+  const urlParams = new URL(document.location).searchParams;
+  return urlParams.has("roomName");
 }
