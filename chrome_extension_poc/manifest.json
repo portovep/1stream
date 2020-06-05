@@ -12,22 +12,23 @@
   "content_security_policy": "script-src 'self' https://cdn4.mxpnl.com/libs/mixpanel-2-latest.min.js; object-src 'self'",
   "web_accessible_resources": ["lib/css/*.css"],
   "background": {
-    "scripts": [ "lib/mixpanel.js", "background.js"],
+    "scripts": ["lib/mixpanel.js", "background.js"],
     "persistent": false
   },
   "page_action": {
     "default_icon": {
-      "16": "images/get_started16.png",
-      "32": "images/get_started32.png",
-      "48": "images/get_started48.png",
-      "128": "images/get_started128.png"
-    }
+      "16": "images/icon_16.png",
+      "32": "images/icon_32.png",
+      "48": "images/icon_48.png",
+      "128": "images/icon_128.png"
+    },
+    "default_title": "Start a Binge Party session"
   },
   "icons": {
-    "16": "images/get_started16.png",
-    "32": "images/get_started32.png",
-    "48": "images/get_started48.png",
-    "128": "images/get_started128.png"
+    "16": "images/icon_16.png",
+    "32": "images/icon_32.png",
+    "48": "images/icon_48.png",
+    "128": "images/icon_128.png"
   },
   "manifest_version": 2,
   "content_scripts": [
