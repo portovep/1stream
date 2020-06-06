@@ -1,52 +1,77 @@
 console.log("Waiting for START command from extension");
 trackEvent("contentscript.init");
 
-var view = View.initializeUI(document, window);
-
+var view;
 var video;
 var room;
 
+try {
+  var view = View.initializeUI(document, window);
+} catch (error) {
+  trackError(error);
+}
+
 async function startup() {
-  trackEvent("startup.click");
+  try {
+    trackEvent("startup.click");
 
-  if (room && !room.closed) {
-    if (room.connectionOpen) {
-      view.showNotification("You're watching together, video is linked 👍");
-    } else {
-      view.showShareModal();
-      printURLToShare(room.roomId);
+    if (room && !room.closed) {
+      if (room.connectionOpen) {
+        view.showNotification("You're watching together, video is linked 👍");
+      } else {
+        view.showShareModal();
+        printURLToShare(room.roomId);
+      }
+      return;
     }
-    return;
+
+    view.showShareModal();
+
+    if (!video) {
+      video = await VideoPlayer.locateVideo(document, window.location.hostname);
+      video.pause();
+    }
+
+    trackEvent("room.creating");
+    room = await Room.create();
+    bindVideoPlayerToRoom(video, room);
+
+    printURLToShare(room.roomId);
+    trackEvent("room.created");
+  } catch (error) {
+    trackError(error);
   }
-
-  view.showShareModal();
-
-  if (!video) {
-    video = await VideoPlayer.locateVideo(document, window.location.hostname);
-    video.pause();
-  }
-
-  trackEvent("room.creating");
-  room = await Room.create();
-  bindVideoPlayerToRoom(video, room);
-
-  printURLToShare(room.roomId);
-  trackEvent("room.created");
 }
 
 async function connect() {
-  trackEvent("connect");
-  video = await VideoPlayer.locateVideo(document, window.location.hostname);
-  video.pause();
+  try {
+    trackEvent("connect");
+    video = await VideoPlayer.locateVideo(document, window.location.hostname);
+    video.pause();
 
-  const roomName = extractRoomNameFromURL();
-  trackEvent("room.joining", { roomId: roomName });
+    const roomName = extractRoomNameFromURL();
+    trackEvent("room.joining", { roomId: roomName });
 
-  room = await Room.join(roomName);
+    room = await Room.join(roomName);
 
-  bindVideoPlayerToRoom(video, room);
-  trackEvent("room.joined");
+    bindVideoPlayerToRoom(video, room);
+    trackEvent("room.joined");
+  } catch (error) {
+    trackError(error);
+  }
 }
+
+window.onbeforeunload = () => {
+  try {
+    console.log("Page unloading - closing room if open");
+    if (room) {
+      trackEvent("room.closing", { reason: "page_unload" });
+      room.close();
+    }
+  } catch (error) {
+    trackError(error);
+  }
+};
 
 function onUrlChanged(newUrl) {
   // TODO in the future handle transitions across videos
@@ -58,14 +83,6 @@ function onUrlChanged(newUrl) {
     room.close();
   }
 }
-
-window.onbeforeunload = () => {
-  console.log("Page unloading - closing room if open");
-  if (room) {
-    trackEvent("room.closing", { reason: "page_unload" });
-    room.close();
-  }
-};
 
 function bindVideoPlayerToRoom(video, room) {
   // Video listeners
@@ -137,6 +154,7 @@ function bindVideoPlayerToRoom(video, room) {
 
   room.onPeerError((err) => {
     trackEvent("error.peer", { name: err.name, message: err.message });
+    trackError({ stack: err.message });
     view.showNotification("We couldn't connect, something went wrong 🙄");
   });
 
@@ -156,17 +174,21 @@ function logCommandReceived(commandName, currentTime) {
 }
 
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-  console.log("Received command " + request.command + " from extension");
-  if (request.command == "START") {
-    console.log("Reporting status STARTING to extension");
-    sendResponse({ status: "STARTING" });
-    startup();
-  } else if (request.command == "CONNECT") {
-    console.log("Reporting status CONNECTING to extension");
-    sendResponse({ status: "CONNECTING" });
-    connect();
-  } else if (request.command == "URL_CHANGED") {
-    onUrlChanged(request.newUrl);
+  try {
+    console.log("Received command " + request.command + " from extension");
+    if (request.command == "START") {
+      console.log("Reporting status STARTING to extension");
+      sendResponse({ status: "STARTING" });
+      startup();
+    } else if (request.command == "CONNECT") {
+      console.log("Reporting status CONNECTING to extension");
+      sendResponse({ status: "CONNECTING" });
+      connect();
+    } else if (request.command == "URL_CHANGED") {
+      onUrlChanged(request.newUrl);
+    }
+  } catch (error) {
+    trackError(error);
   }
 });
 
@@ -182,6 +204,13 @@ function trackEvent(event, eventParams) {
     ? Object.assign(eventParams, globalParams)
     : globalParams;
   chrome.runtime.sendMessage({ event, params });
+}
+
+function trackError(error) {
+  chrome.runtime.sendMessage({
+    error: error.stack,
+  });
+  throw error;
 }
 
 function extractRoomNameFromURL() {
