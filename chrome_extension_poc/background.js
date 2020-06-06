@@ -9,42 +9,12 @@ chrome.runtime.onInstalled.addListener(function() {
           new chrome.declarativeContent.PageStateMatcher({
             pageUrl: { hostEquals: "www.youtube.com", pathContains: "watch" },
           }),
-          new chrome.declarativeContent.PageStateMatcher({
-            pageUrl: { hostEquals: "www.primevideo.com" },
-          }),
         ],
         actions: [new chrome.declarativeContent.ShowPageAction()],
       },
     ]);
   });
 });
-
-chrome.webNavigation.onCompleted.addListener(handleSyncRequest, {
-  url: [
-    {
-      urlMatches: "https://www.netflix.com/watch/*",
-      queryContains: "roomName",
-    },
-    {
-      urlMatches: "https://www.primevideo.com/detail/*",
-      queryContains: "roomName",
-    },
-    {
-      urlMatches: "https://www.youtube.com/watch*",
-      queryContains: "roomName",
-    },
-  ],
-});
-
-function handleSyncRequest(event) {
-  chrome.tabs.sendMessage(event.tabId, { command: "CONNECT" }, function(
-    response
-  ) {
-    console.log(
-      "Tab with ID " + event + " responded with status: " + response.status
-    );
-  });
-}
 
 chrome.pageAction.onClicked.addListener(function(tab) {
   console.log("Page Action on click fired for tab ID: " + tab.id);
