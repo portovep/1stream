@@ -143,7 +143,8 @@ class View {
 
       this._onURLCopied();
     } catch (err) {
-      console.log("Oops, unable to copy");
+      console.error("Oops, unable to copy");
+      throw err;
     }
     this.window.getSelection().removeAllRanges();
   }

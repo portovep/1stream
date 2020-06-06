@@ -1,18 +1,14 @@
 {
-  "name": "BingeParty",
-  "version": "1.0",
-  "description": "Social watching for everybody",
-  "permissions": [
-    "activeTab",
-    "declarativeContent",
-    "webNavigation",
-    "tabs",
-    "https://*/"
-  ],
-  "content_security_policy": "script-src 'self' https://cdn4.mxpnl.com/libs/mixpanel-2-latest.min.js; object-src 'self'",
+  "manifest_version": 2,
+  "name": "Binge Party Beta",
+  "version": "0.5.0",
+  "version_name": "0.5 beta",
+  "description": "Social streaming for quarantine",
+  "permissions": ["activeTab", "declarativeContent"],
+  "content_security_policy": "script-src 'self' https://cdn4.mxpnl.com/libs/mixpanel-2-latest.min.js https://cdn.rollbar.com/rollbarjs/refs/tags/v2.16.2/rollbar.min.js; object-src 'self'",
   "web_accessible_resources": ["lib/css/*.css"],
   "background": {
-    "scripts": ["lib/mixpanel.js", "background.js"],
+    "scripts": ["lib/mixpanel.js", "lib/rollbar.js", "background.js"],
     "persistent": false
   },
   "page_action": {
@@ -30,21 +26,16 @@
     "48": "images/icon_48.png",
     "128": "images/icon_128.png"
   },
-  "manifest_version": 2,
   "content_scripts": [
     {
-      "matches": [
-        "https://www.netflix.com/*",
-        "https://www.primevideo.com/*",
-        "https://www.youtube.com/*"
-      ],
+      "matches": ["https://www.netflix.com/*", "https://www.youtube.com/*"],
       "js": [
         "lib/peerjs.min.js",
         "lib/materialize.min.js",
         "room.js",
         "view.js",
-        "contentScript.js",
-        "videoPlayer.js"
+        "videoPlayer.js",
+        "contentScript.js"
       ],
       "css": ["lib/css/main.css"]
     }
