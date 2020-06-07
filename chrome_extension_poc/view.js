@@ -39,13 +39,13 @@ class View {
   }
 
   showNotification(message) {
+    const logoURL = chrome.runtime.getURL("images/logo_square.png");
     const toastContent = `
-        <i class="medium material-icons">face</i>
+        <img class="notification-img" src="${logoURL}"/>
         <span class="notification-msg">${message}<span>`;
 
     M.toast({
       html: toastContent,
-      classes: "rounded",
     });
   }
 
