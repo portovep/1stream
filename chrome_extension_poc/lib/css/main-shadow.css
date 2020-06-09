@@ -52,7 +52,11 @@
 }
 
 .modal-title {
-  margin-top: 60px;
+  margin-top: 25px;
+}
+
+#modal-close {
+  padding: 0 16px;
 }
 
 #modal-share .btn-flat:hover {

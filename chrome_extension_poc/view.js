@@ -59,6 +59,11 @@ class View {
             <img src="${backgroundURL}"/>
           </div>
           <div class="col s7 modal-instructions-col">
+              <div class="right-align">
+                <a id="modal-close" class="btn-flat btn-large">
+                  <i class=" material-icons right">close</i>
+                </a>
+              </div>
               <div class="modal-title">
                 <h2>1Stream</h2>
               </div>
@@ -70,6 +75,10 @@ class View {
         </div>
       </div>  
     `;
+
+    this.shadowContainer
+      .getElementById("modal-close")
+      .addEventListener("click", this.hideShowShareModel.bind(this));
 
     var elems = this.shadowContainer.querySelectorAll(".modal");
     var instances = M.Modal.init(elems);
