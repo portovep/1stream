@@ -22,15 +22,45 @@
 }
 
 #modal-share {
-  max-width: 35%;
+  max-width: 45%;
+}
+
+.modal-row {
+  margin-bottom: 0;
+}
+
+.modal-image-col {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.modal-image-col > img {
+  flex-shrink: 0;
+  min-width: 100%;
+  min-height: 100%;
+  margin-left: -210px;
+}
+
+.modal-instructions-col {
+  padding-left: 40px !important;
+}
+
+.modal-contents {
+  padding-right: 5px;
+}
+
+.modal-title {
+  margin-top: 0;
+}
+
+#modal-close {
+  padding: 0 16px;
 }
 
 #modal-share .btn-flat:hover {
   background-color: #eceff1;
-}
-
-.share-title {
-  padding: 4px 15px 0px 3px;
 }
 
 #shadow-extension-container {
@@ -45,9 +75,13 @@
 .share-text {
   color: rgba(32, 33, 36, 0.671);
   cursor: default;
-  font-size: 14px;
+  font-size: 17px;
   margin-bottom: 12px;
-  padding: 25px 20px 0px 0px;
+  padding: 5px 20px 0px 0px;
+}
+
+.share-text--main {
+  margin-bottom: 40px;
 }
 
 .share-url {
@@ -56,13 +90,23 @@
 }
 
 .share-button {
-  margin-top: 15px;
+  margin-top: 45px;
+  margin-bottom: 35px;
 }
 
-.share-button > a {
-  padding-left: 5px;
+.share-url-input-field {
+  min-width: 60%;
+}
+
+#share-button {
+  background-color: #5a52ff;
+  margin-top: 8px;
 }
 
 .spinner-container {
-  padding: 45px 0px;
+  padding: 25% 0px;
+}
+
+.spinner-layer {
+  border-color: #5a52ff;
 }

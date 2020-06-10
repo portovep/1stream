@@ -39,30 +39,46 @@ class View {
   }
 
   showNotification(message) {
+    const logoURL = chrome.runtime.getURL("images/logo_square.png");
     const toastContent = `
-        <i class="medium material-icons">face</i>
+        <img class="notification-img" src="${logoURL}"/>
         <span class="notification-msg">${message}<span>`;
 
     M.toast({
       html: toastContent,
-      classes: "rounded",
     });
   }
 
   showShareModal() {
+    const backgroundURL = chrome.runtime.getURL("images/modal_background.jpg");
     this.container.innerHTML = `
       <!-- Modal Structure -->
       <div id="modal-share" class="modal">
-        <div class="modal-content">
-        <div class="share-title">
-          <h3>Add others</h3>
+        <div class="row modal-row">
+          <div class="col s5 modal-image-col">
+            <img src="${backgroundURL}"/>
+          </div>
+          <div class="col s7 modal-instructions-col">
+              <div class="right-align">
+                <a id="modal-close" class="btn-flat btn-large">
+                  <i class=" material-icons right">close</i>
+                </a>
+              </div>
+              <div class="modal-title">
+                <h2>1Stream</h2>
+              </div>
+              <div class="modal-contents">
+                ${this._spinnerContent}
+              </div>
+            </div> 
+          </div>
         </div>
-        <div class="divider"></div>
-        ${this._spinnerContent}
-      </div>
-        </div>  
       </div>  
     `;
+
+    this.shadowContainer
+      .getElementById("modal-close")
+      .addEventListener("click", this.hideShowShareModel.bind(this));
 
     var elems = this.shadowContainer.querySelectorAll(".modal");
     var instances = M.Modal.init(elems);
@@ -77,22 +93,27 @@ class View {
 
   showSharableURL(sharableURL) {
     const modalContent = this.shadowContainer.querySelectorAll(
-      ".modal-content"
+      ".modal-contents"
     )[0];
 
     modalContent.innerHTML = `
-      <div class="share-title">
-        <h3>Add others</h3>
-      </div>
-      <div class="divider"></div>
       <div class="share-message-container">
-        <div class="share-text">Share this info with people you want to watch remotely</div>
+        <div class="share-text">
+          <p class="share-text--main">Your room is ready!</p>
+          <p>1. Copy and share the link with a friend</p>
+          <p>2. Your friend should open the link in Chrome</p>
+          <p>3. You both are ready to watch in sync</p>
+        </div>
       </div>
-      <div class="share-url">${sharableURL}</div>
       <div class="share-button">
-        <a id="share-button" class="waves-effect waves-teal btn-flat btn-large"><i class="material-icons">content_copy</i>
-          Copy joining info
+      <div class="row">
+        <div class="input-field col s6 share-url-input-field">
+          <input value="${sharableURL}" id="share-url" type="text" class="validate">
+        </div>
+        <a id="share-button" class="waves-effect waves-teal btn btn-large"><i class="material-icons">content_copy</i>
+          Copy
         </a>
+      </div>     
       </div>
     `;
 
@@ -103,15 +124,6 @@ class View {
 
   _onURLCopied() {
     this.showNotification("URL copied to the clipboard 👍");
-    this._showWaitingForFriend();
-  }
-
-  _showWaitingForFriend() {
-    const shareTitle = this.shadowContainer.querySelectorAll(".share-title")[0];
-
-    shareTitle.innerHTML = `
-      <h3>Waiting for your friend....</h3>
-    `;
   }
 
   _applyStyles() {
@@ -131,7 +143,7 @@ class View {
 
   _copyShareableURL() {
     console.log("Copying share URL to clipboard");
-    var shareUrlElement = this.container.querySelector(".share-url");
+    var shareUrlElement = this.container.querySelector("#share-url");
     var range = this.document.createRange();
     range.selectNode(shareUrlElement);
     window.getSelection().addRange(range);

@@ -3,10 +3,14 @@
   "name": "Binge Party Beta",
   "version": "0.5.0",
   "version_name": "0.5 beta",
-  "description": "Social streaming for quarantine",
+  "description": "Watch Netflix or Youtube streams remotely with friends.",
   "permissions": ["activeTab", "declarativeContent"],
   "content_security_policy": "script-src 'self' https://cdn4.mxpnl.com/libs/mixpanel-2-latest.min.js https://cdn.rollbar.com/rollbarjs/refs/tags/v2.16.2/rollbar.min.js; object-src 'self'",
-  "web_accessible_resources": ["lib/css/*.css"],
+  "web_accessible_resources": [
+    "lib/css/*.css",
+    "images/logo_square.png",
+    "images/modal_background.jpg"
+  ],
   "background": {
     "scripts": ["lib/mixpanel.js", "lib/rollbar.js", "background.js"],
     "persistent": false
