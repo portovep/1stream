@@ -1,9 +1,9 @@
 {
   "manifest_version": 2,
-  "name": "Binge Party Beta",
+  "name": "1Stream",
   "version": "0.5.0",
   "version_name": "0.5 beta",
-  "description": "Watch Netflix or Youtube streams remotely with friends.",
+  "description": "1Stream allows you to watch Netflix or Youtube streams in sync remotely with friends",
   "permissions": ["activeTab", "declarativeContent"],
   "content_security_policy": "script-src 'self' https://cdn4.mxpnl.com/libs/mixpanel-2-latest.min.js https://cdn.rollbar.com/rollbarjs/refs/tags/v2.16.2/rollbar.min.js; object-src 'self'",
   "web_accessible_resources": [
