@@ -7,14 +7,14 @@ class Room {
     this.isCreator = connection == null;
 
     this.peer.on("error", (err) => {
-      if (this.onpeererror) this.onpeererror(err)
+      if (this.onpeererror) this.onpeererror(err);
       console.log("Fatal peer error " + err + "\nPeer will be destroyed.");
-      // This error is usually fatal so ensure we destroy the peer to mark the room as closed. 
+      // This error is usually fatal so ensure we destroy the peer to mark the room as closed.
       this.peer.destroy();
     });
 
-    this.peer.on('disconnected', () => {
-      if (this.onpeerdisconnected) this.onpeerdisconnected()
+    this.peer.on("disconnected", () => {
+      if (this.onpeerdisconnected) this.onpeerdisconnected();
       console.log("Peer disconnected");
     });
 
@@ -25,8 +25,10 @@ class Room {
 
     peer.on("connection", (conn) => {
       if (this.connection && this.connection.open) {
-        // So far we only support 1 to 1 connections, if a second peer tries to connect we reject it for now to avoid issues. 
-        console.log("New connection received but there's already one opened. Rejecting new one.");
+        // So far we only support 1 to 1 connections, if a second peer tries to connect we reject it for now to avoid issues.
+        console.log(
+          "New connection received but there's already one opened. Rejecting new one."
+        );
         conn.close();
       } else {
         console.log("New connection received");
@@ -40,8 +42,8 @@ class Room {
    * Instantiates a Room by creating a new one. Use room.roomId to access room Id
    */
   static create() {
-    return new Promise(function (resolve, reject) {
-      const peer = new Peer(Room.serverOptions);
+    return new Promise(function(resolve, reject) {
+      const peer = new Peer();
       peer.on("open", (peerId) => {
         // New room so the new peer ID becomes the roomID
         resolve(new Room(peerId, peer));
@@ -53,8 +55,8 @@ class Room {
    * Instantiates a Room by joining one given an existing roomId
    */
   static join(roomId) {
-    return new Promise(function (resolve, reject) {
-      const peer = new Peer(Room.serverOptions);
+    return new Promise(function(resolve, reject) {
+      const peer = new Peer();
       peer.on("open", (peerId) => {
         const conn = peer.connect(roomId);
         resolve(new Room(roomId, peer, conn));
@@ -63,15 +65,15 @@ class Room {
   }
 
   /**
-   * If the room is closed, it cannot be used again and a new room needs to be created. 
-   * This can happen after calling room.close() or because there was a fatal issue in the underlying peer.  
+   * If the room is closed, it cannot be used again and a new room needs to be created.
+   * This can happen after calling room.close() or because there was a fatal issue in the underlying peer.
    */
   get closed() {
     return this.peer.destroyed;
   }
 
   get connectionOpen() {
-    return this.connection != null && this.connection.open
+    return this.connection != null && this.connection.open;
   }
 
   sendPlayCommand(videoTime) {
@@ -171,7 +173,9 @@ class Room {
       this.connection = null;
       // If the connection is closed and we're not the creator, cleanup the current room.
       if (!this.isCreator) {
-        console.log("Closing room - it's no longer useful after disconnecting from the creator that sent us the link");
+        console.log(
+          "Closing room - it's no longer useful after disconnecting from the creator that sent us the link"
+        );
         this.close();
       }
       if (this.onconnectionclosed) {

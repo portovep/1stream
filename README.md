@@ -1,4 +1,4 @@
-# Bingeparty
+# 1Strem Browser Extension
 
 ## Getting started
 
