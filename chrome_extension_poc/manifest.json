@@ -1,9 +1,9 @@
 {
   "manifest_version": 2,
   "name": "1Stream",
-  "version": "0.5.0",
-  "version_name": "0.5 beta",
-  "description": "1Stream allows you to watch Netflix or Youtube streams in sync remotely with friends",
+  "version": "0.7.2",
+  "version_name": "0.7.2 beta",
+  "description": "Watch Netflix or Youtube with your friends and loved ones",
   "permissions": ["activeTab", "declarativeContent"],
   "content_security_policy": "script-src 'self' https://cdn4.mxpnl.com/libs/mixpanel-2-latest.min.js https://cdn.rollbar.com/rollbarjs/refs/tags/v2.16.2/rollbar.min.js; object-src 'self'",
   "web_accessible_resources": [
@@ -22,7 +22,7 @@
       "48": "images/icon_48.png",
       "128": "images/icon_128.png"
     },
-    "default_title": "Start a Binge Party session"
+    "default_title": "Start watching with your friend"
   },
   "icons": {
     "16": "images/icon_16.png",

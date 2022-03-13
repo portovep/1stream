@@ -13,7 +13,11 @@ try {
 
 if (isShareableURL()) {
   console.log("Shareable URL detected, trying to connect to remote");
-  connect();
+
+  const roomName = extractRoomNameFromURL();
+  console.log(`Room name: ${roomName}`);
+
+  connect(roomName);
 }
 
 async function startup() {
@@ -48,14 +52,14 @@ async function startup() {
   }
 }
 
-async function connect() {
+async function connect(roomName) {
   try {
     trackEvent("connect");
     video = await VideoPlayer.locateVideo(document, window.location.hostname);
     video.pause();
 
-    const roomName = extractRoomNameFromURL();
     trackEvent("room.joining", { roomId: roomName });
+    console.log("Joining room: " + roomName);
 
     room = await Room.join(roomName);
 
@@ -178,7 +182,7 @@ function logCommandReceived(commandName, currentTime) {
   );
 }
 
-chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   try {
     console.log("Received command " + request.command + " from extension");
     if (request.command == "START") {

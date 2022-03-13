@@ -99,7 +99,11 @@ class VideoPlayer {
       if (isNetflix) {
         return document.getElementsByTagName("video")[0];
       } else if (isYoutube) {
-        return document.getElementsByTagName("video")[0];
+        for (let video of document.getElementsByTagName("video")) {
+          if (video.duration > 0) {
+            return video;
+          }
+        }
       } else {
         throw "Cannot find a video element for this page";
       }
