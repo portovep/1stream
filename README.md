@@ -1,4 +1,19 @@
-# 1Strem Browser Extension
+<h1 align="center"> 1Stream Browser Extension </h1> <br>
+<p align="center">
+  <img alt="1Stream Browser Extension" title="1Stream Browser Extension" src="pictures/icon_128.png" width="128">
+</p>
+
+<p align="center">
+  Watch Youtube & Netflix videos with a friend.
+</p>
+
+<p align="center">
+  <a href="https://chrome.google.com/webstore/detail/1stream/ckgaafkgiajiabimkgpgkiamnolncfkg?hl=en-GB">
+    <img alt="Download on the Chrome Web Store" title="Chrome Web Store" src="pictures/chrome-web-store-download.png" width="180">
+  </a>
+</p>
+
+#
 
 1Stream is a chrome extension that allows you to watch Netflix or Youtube streams in sync with a friend.
 
@@ -24,6 +39,18 @@ The extension synchronizes video playback between you and your friend so you can
 - WebRTC
 - Peer.js
 
+## Overview
+
+<img src="pictures/architecture.png" width="700">
+
+#### Signaling server
+
+A signaling server is needed to establish the P2P WebRTC connection between the two browser extensions. The extension uses the PeerJS signaling server, but you can use your own server.
+
+#### Browser extension
+
+After the initial connection, the two browser extensions communicate via WebRTC Peer connections.
+
 ## Features & roadmap
 
 - [x] Add support for Netflix
@@ -39,7 +66,7 @@ The extension synchronizes video playback between you and your friend so you can
 
 ### Running your own signaling server
 
-The extension uses peerjs hosted server by default. If you want to run your own signaling server, you can read the [peerjs docs](https://github.com/peers/peerjs-server) to get started.
+The extension uses PeerJS hosted server by default. If you want to run your own signaling server, you can read the [peerjs docs](https://github.com/peers/peerjs-server) to get started.
 
 They offer a docker image so that you can run the container as follows.
 
