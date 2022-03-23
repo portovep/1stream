@@ -1,0 +1,24 @@
+name: continuous-deployment
+on:
+  push:
+    tags:        
+      - v**
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Package Release
+      uses: thedoctor0/zip-release@master
+      with:
+        type: 'zip'
+        filename: 'chrome-extension.zip'
+        path: 'chrome_extension_poc'
+        exclusions: '*.git* /*node_modules/* '
+    - name: Upload Release
+      uses: ncipollo/release-action@v1
+      with:
+        artifacts: 'chrome-extension.zip'
+        tag: 'test-tag'
+        token: ${{ secrets.GITHUB_TOKEN }}
