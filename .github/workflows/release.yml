@@ -1,4 +1,4 @@
-name: continuous-deployment
+name: Release
 on:
   push:
     tags:        
@@ -13,12 +13,11 @@ jobs:
       uses: thedoctor0/zip-release@master
       with:
         type: 'zip'
-        filename: 'chrome-extension.zip'
+        filename: '1Stream-chrome-${{ github.ref_name }}.zip'
         path: 'chrome_extension_poc'
         exclusions: '*.git* /*node_modules/* '
     - name: Upload Release
       uses: ncipollo/release-action@v1
       with:
-        artifacts: 'chrome-extension.zip'
-        tag: 'test-tag'
+        artifacts: '1Stream-chrome-${{ github.ref_name }}.zip'
         token: ${{ secrets.GITHUB_TOKEN }}
