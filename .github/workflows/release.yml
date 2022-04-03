@@ -1,0 +1,23 @@
+name: Release
+on:
+  push:
+    tags:        
+      - v**
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Package Release
+      uses: thedoctor0/zip-release@master
+      with:
+        type: 'zip'
+        filename: '1Stream-chrome-${{ github.ref_name }}.zip'
+        path: 'chrome_extension_poc'
+        exclusions: '*.git* /*node_modules/* '
+    - name: Upload Release
+      uses: ncipollo/release-action@v1
+      with:
+        artifacts: '1Stream-chrome-${{ github.ref_name }}.zip'
+        token: ${{ secrets.GITHUB_TOKEN }}
