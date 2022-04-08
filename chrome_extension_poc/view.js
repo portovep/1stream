@@ -92,9 +92,8 @@ class View {
   }
 
   showSharableURL(sharableURL) {
-    const modalContent = this.shadowContainer.querySelectorAll(
-      ".modal-contents"
-    )[0];
+    const modalContent =
+      this.shadowContainer.querySelectorAll(".modal-contents")[0];
 
     modalContent.innerHTML = `
       <div class="share-message-container">

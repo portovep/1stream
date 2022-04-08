@@ -216,6 +216,7 @@ function trackEvent(event, eventParams) {
 }
 
 function trackError(error) {
+  console.error(error);
   chrome.runtime.sendMessage({
     error: error.stack,
   });

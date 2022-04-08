@@ -93,10 +93,11 @@ class VideoPlayer {
    */
   static locateVideo(document, hostname) {
     const isNetflix = hostname.includes("netflix");
+    const isHBOMax = hostname.includes("hbomax");
     const isYoutube = hostname.includes("youtube");
 
     const findVideoElement = () => {
-      if (isNetflix) {
+      if (isNetflix || isHBOMax) {
         return document.getElementsByTagName("video")[0];
       } else if (isYoutube) {
         for (let video of document.getElementsByTagName("video")) {
@@ -140,9 +141,9 @@ class VideoPlayer {
 
     return new Promise((resolve, reject) => {
       var checkExist = setInterval(function () {
-        var video = findVideoElement();
         console.log("Looking for video");
-        if (video.currentTime) {
+        var video = findVideoElement();
+        if (video && video.currentTime) {
           console.log("Got video: ", video);
           clearInterval(checkExist);
           if (isNetflix) {

@@ -42,7 +42,7 @@ class Room {
    * Instantiates a Room by creating a new one. Use room.roomId to access room Id
    */
   static create() {
-    return new Promise(function(resolve, reject) {
+    return new Promise(function (resolve, reject) {
       const peer = new Peer();
       peer.on("open", (peerId) => {
         // New room so the new peer ID becomes the roomID
@@ -55,7 +55,7 @@ class Room {
    * Instantiates a Room by joining one given an existing roomId
    */
   static join(roomId) {
-    return new Promise(function(resolve, reject) {
+    return new Promise(function (resolve, reject) {
       const peer = new Peer();
       peer.on("open", (peerId) => {
         const conn = peer.connect(roomId);
@@ -216,7 +216,8 @@ class Room {
 }
 
 Room.serverOptions = {
-  host: "bingeparty.pabloporto.me",
-  port: 443,
+  host: "localhost",
+  secure: false,
+  port: 9000,
   path: "/myapp",
 };
