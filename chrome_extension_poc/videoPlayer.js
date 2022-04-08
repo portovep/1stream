@@ -87,6 +87,35 @@ class VideoPlayer {
     this.onseeked = callback;
   }
 
+  static injectNetflixHandler = () => {
+    console.log("Injecting Netflix video handler");
+    const netflixHandlerScriptContent = `setTimeout(function() {
+          window.addEventListener('message', function(event) {
+              console.log('page javascript got message:', event);
+          
+              const videoPlayer = window.netflix.appContext.state.playerApp.getAPI()
+              .videoPlayer;
+              const playerSessionId = videoPlayer.getAllPlayerSessionIds()[0];
+              const player = videoPlayer.getVideoPlayerBySessionId(playerSessionId);
+          
+              if (event.data.type === "SET_CURRENT_TIME") {
+              console.log("Trying to set new current time (ms): " + event.data.currentTime);
+              player.seek(event.data.currentTime);
+              player.pause();
+              console.log("New current time is (ms): " + player.getCurrentTime());
+              }
+          
+          });
+          }, 0);`.trim();
+
+    var s = document.createElement("script");
+    s.textContent = netflixHandlerScriptContent;
+    (document.head || document.documentElement).appendChild(s);
+    s.onload = function () {
+      s.remove();
+    };
+  };
+
   /**
    * Promise that trieds to locate a video element in the current document and returns a VideoPlayer when one is found.
    * Additionally it injects a netflix video handler in the current document if the hostname is Netflix.
@@ -100,49 +129,27 @@ class VideoPlayer {
       if (isNetflix || isHBOMax) {
         return document.getElementsByTagName("video")[0];
       } else if (isYoutube) {
-        for (let video of document.getElementsByTagName("video")) {
+        for (let video of document.getElementsByTagName("videoa")) {
           if (video.duration > 0) {
             return video;
           }
         }
       } else {
-        throw "Cannot find a video element for this page";
+        throw "Website not supported. Cannot find a video element for this page";
       }
     };
 
-    const injectNetflixHandler = () => {
-      console.log("Injecting Netflix video handler");
-      const netflixHandlerScriptContent = `setTimeout(function() {
-            window.addEventListener('message', function(event) {
-                console.log('page javascript got message:', event);
-            
-                const videoPlayer = window.netflix.appContext.state.playerApp.getAPI()
-                .videoPlayer;
-                const playerSessionId = videoPlayer.getAllPlayerSessionIds()[0];
-                const player = videoPlayer.getVideoPlayerBySessionId(playerSessionId);
-            
-                if (event.data.type === "SET_CURRENT_TIME") {
-                console.log("Trying to set new current time (ms): " + event.data.currentTime);
-                player.seek(event.data.currentTime);
-                player.pause();
-                console.log("New current time is (ms): " + player.getCurrentTime());
-                }
-            
-            });
-            }, 0);`.trim();
-
-      var s = document.createElement("script");
-      s.textContent = netflixHandlerScriptContent;
-      (document.head || document.documentElement).appendChild(s);
-      s.onload = function () {
-        s.remove();
-      };
-    };
-
     return new Promise((resolve, reject) => {
+      var startTime = new Date().getTime();
       var checkExist = setInterval(function () {
         console.log("Looking for video");
-        var video = findVideoElement();
+        try {
+          var video = findVideoElement();
+        } catch (e) {
+          clearInterval(checkExist);
+          reject(e);
+        }
+
         if (video && video.currentTime) {
           console.log("Got video: ", video);
           clearInterval(checkExist);
@@ -150,6 +157,11 @@ class VideoPlayer {
             injectNetflixHandler();
           }
           resolve(new VideoPlayer(video, hostname));
+        }
+
+        if (new Date().getTime() - startTime > 10000) {
+          clearInterval(checkExist);
+          reject("Couldn't find a video element in this page");
         }
       }, 1000);
     });

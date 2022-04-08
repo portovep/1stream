@@ -49,6 +49,7 @@ async function startup() {
     trackEvent("room.created");
   } catch (error) {
     trackError(error);
+    view.showErrorInModal(error);
   }
 }
 
@@ -67,6 +68,9 @@ async function connect(roomName) {
     trackEvent("room.joined");
   } catch (error) {
     trackError(error);
+    view.showNotification(
+      "We couldn't connect with your friend, something went wrong 🙄"
+    );
   }
 }
 
@@ -145,7 +149,7 @@ function bindVideoPlayerToRoom(video, room) {
 
   room.onConnectionClosed(() => {
     video.pause();
-    view.showNotification("Connection finished");
+    view.showNotification("Lost connection with your friend 🙄");
     trackEvent("connection.closed");
   });
 
@@ -220,7 +224,6 @@ function trackError(error) {
   chrome.runtime.sendMessage({
     error: error.stack,
   });
-  throw error;
 }
 
 function extractRoomNameFromURL() {
