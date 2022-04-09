@@ -1,8 +1,8 @@
 {
   "manifest_version": 2,
   "name": "1Stream",
-  "version": "0.7.2",
-  "version_name": "0.7.2 beta",
+  "version": "0.8.0",
+  "version_name": "0.8.0",
   "description": "Watch Netflix or Youtube with your friends and loved ones",
   "permissions": ["activeTab", "declarativeContent"],
   "content_security_policy": "script-src 'self' https://cdn4.mxpnl.com/libs/mixpanel-2-latest.min.js https://cdn.rollbar.com/rollbarjs/refs/tags/v2.16.2/rollbar.min.js; object-src 'self'",
@@ -32,7 +32,11 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://www.netflix.com/*", "https://www.youtube.com/*"],
+      "matches": [
+        "https://www.netflix.com/*",
+        "https://www.youtube.com/*",
+        "https://play.hbomax.com/*"
+      ],
       "js": [
         "lib/peerjs.min.js",
         "lib/materialize.min.js",

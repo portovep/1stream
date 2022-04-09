@@ -91,10 +91,23 @@ class View {
     instances[0].close();
   }
 
+  showErrorInModal(error) {
+    const modalContent =
+      this.shadowContainer.querySelectorAll(".modal-contents")[0];
+
+    modalContent.innerHTML = `
+      <div class="share-message-container">
+        <div class="share-text">
+          <h2>Oops, something went wrong, try again!</h2>
+          <p>Error details: ${error}</p>
+        </div>
+      </div>
+    `;
+  }
+
   showSharableURL(sharableURL) {
-    const modalContent = this.shadowContainer.querySelectorAll(
-      ".modal-contents"
-    )[0];
+    const modalContent =
+      this.shadowContainer.querySelectorAll(".modal-contents")[0];
 
     modalContent.innerHTML = `
       <div class="share-message-container">
