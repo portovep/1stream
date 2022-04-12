@@ -135,8 +135,23 @@ class View {
       .addEventListener("click", this._copyShareableURL.bind(this));
   }
 
+  showWaitingForFriendInModal() {
+    const modalContent =
+      this.shadowContainer.querySelectorAll(".modal-contents")[0];
+
+    modalContent.innerHTML = `
+      <div class="share-message-container">
+        <div class="share-text">
+          <p>Waiting for friend to open the link...</p>
+          ${this._spinnerContent}
+        </div>
+      </div>
+    `;
+  }
+
   _onURLCopied() {
     this.showNotification("URL copied to the clipboard 👍");
+    this.showWaitingForFriendInModal();
   }
 
   _applyStyles() {
