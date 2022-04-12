@@ -32,11 +32,7 @@
   },
   "content_scripts": [
     {
-      "matches": [
-        "https://www.netflix.com/*",
-        "https://www.youtube.com/*",
-        "https://play.hbomax.com/*"
-      ],
+      "matches": ["https://www.netflix.com/*", "https://www.youtube.com/*"],
       "js": [
         "lib/peerjs.min.js",
         "lib/materialize.min.js",

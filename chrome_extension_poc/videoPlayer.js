@@ -120,11 +120,10 @@ class VideoPlayer {
    */
   static locateVideo(document, hostname) {
     const isNetflix = hostname.includes("netflix");
-    const isHBOMax = hostname.includes("hbomax");
     const isYoutube = hostname.includes("youtube");
 
     const findVideoElement = () => {
-      if (isNetflix || isHBOMax) {
+      if (isNetflix) {
         return document.getElementsByTagName("video")[0];
       } else if (isYoutube) {
         for (let video of document.getElementsByTagName("video")) {
