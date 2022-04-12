@@ -26,7 +26,7 @@ async function startup() {
 
     if (room && !room.closed) {
       if (room.connectionOpen) {
-        view.showNotification("You're watching together, video is linked 👍");
+        view.showNotification("Video is synched. You're watching together 👍");
       } else {
         view.showShareModal();
         printURLToShare(room.roomId);
@@ -160,7 +160,7 @@ function bindVideoPlayerToRoom(video, room) {
       view.hideShowShareModel();
       view.showNotification("Your friend has joined, ready to start 👍");
     } else {
-      view.showNotification("You've joined, video is linked 👍");
+      view.showNotification("You've joined your friend, video is synched 👍");
     }
     trackEvent("connection.opened");
   });

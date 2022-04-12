@@ -117,7 +117,7 @@ class VideoPlayer {
   };
 
   /**
-   * Promise that trieds to locate a video element in the current document and returns a VideoPlayer when one is found.
+   * Promise that tries to locate a video element in the current document and returns a VideoPlayer when one is found.
    * Additionally it injects a netflix video handler in the current document if the hostname is Netflix.
    */
   static locateVideo(document, hostname) {
@@ -129,7 +129,7 @@ class VideoPlayer {
       if (isNetflix || isHBOMax) {
         return document.getElementsByTagName("video")[0];
       } else if (isYoutube) {
-        for (let video of document.getElementsByTagName("videoa")) {
+        for (let video of document.getElementsByTagName("video")) {
           if (video.duration > 0) {
             return video;
           }
@@ -154,12 +154,12 @@ class VideoPlayer {
           console.log("Got video: ", video);
           clearInterval(checkExist);
           if (isNetflix) {
-            injectNetflixHandler();
+            VideoPlayer.injectNetflixHandler();
           }
           resolve(new VideoPlayer(video, hostname));
         }
 
-        if (new Date().getTime() - startTime > 10000) {
+        if (new Date().getTime() - startTime > 30000) {
           clearInterval(checkExist);
           reject("Couldn't find a video element in this page");
         }
