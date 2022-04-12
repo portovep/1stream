@@ -10,10 +10,10 @@ chrome.runtime.onInstalled.addListener(function () {
             pageUrl: { hostEquals: "www.youtube.com", pathContains: "watch" },
           }),
           new chrome.declarativeContent.PageStateMatcher({
-            pageUrl: {
-              hostEquals: "play.hbomax.com",
-            },
-            css: ["video"],
+            pageUrl: { hostEquals: "play.hbomax.com", pathContains: "feature" },
+          }),
+          new chrome.declarativeContent.PageStateMatcher({
+            pageUrl: { hostEquals: "play.hbomax.com", pathContains: "episode" },
           }),
         ],
         actions: [new chrome.declarativeContent.ShowPageAction()],

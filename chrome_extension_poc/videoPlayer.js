@@ -90,9 +90,7 @@ class VideoPlayer {
   static injectNetflixHandler = () => {
     console.log("Injecting Netflix video handler");
     const netflixHandlerScriptContent = `setTimeout(function() {
-          window.addEventListener('message', function(event) {
-              console.log('page javascript got message:', event);
-          
+          window.addEventListener('message', function(event) {          
               const videoPlayer = window.netflix.appContext.state.playerApp.getAPI()
               .videoPlayer;
               const playerSessionId = videoPlayer.getAllPlayerSessionIds()[0];
