@@ -84,11 +84,6 @@ Room.serverOptions = {
 };
 ```
 
-## Known issues
-
-- Sometimes the browser caches the JS, try to do a hard refresh.
-- The signaling server does not remove clients from the room yet, you need to restart the signaling server every time, sorry...
-
 ## Contribute
 
 All contributions are welcome! 🙏
