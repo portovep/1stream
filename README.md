@@ -45,7 +45,7 @@ The extension synchronizes video playback between you and your friend so you can
 
 #### Signaling server
 
-A signaling server is needed to establish the P2P WebRTC connection between the two browser extensions. The extension uses the PeerJS signaling server, but you can use your own server.
+A signaling server is needed to establish the P2P WebRTC connection between the two browser extensions. The extension uses the PeerJS signaling server by default, but you can use your own server.
 
 #### Browser extension
 
